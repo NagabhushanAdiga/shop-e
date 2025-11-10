@@ -12,6 +12,7 @@
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "framer-motion": "^10.16.16",
+    "axios": "^1.6.2",
     "react-scripts": "5.0.1"
   },
   "scripts": {
