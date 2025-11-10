@@ -4,6 +4,7 @@ import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { ThemeSettingsProvider, useThemeSettings } from './context/ThemeContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -13,7 +14,7 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
-import OrderTracking from './pages/OrderTracking';
+import UserProfile from './pages/UserProfile';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Admin Layout and Pages
@@ -23,74 +24,84 @@ import AdminCategories from './pages/admin/Categories';
 import AdminProducts from './pages/AdminDashboard';
 import AdminOrders from './pages/admin/Orders';
 import AdminUsers from './pages/admin/Users';
+import AdminFeedback from './pages/admin/Feedback';
+import AdminReports from './pages/admin/Reports';
+import AdminSettings from './pages/admin/Settings';
 
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1976d2',
-      light: '#42a5f5',
-      dark: '#1565c0',
-      lighter: '#e3f2fd',
+const AppContent = () => {
+  const { themeSettings } = useThemeSettings();
+
+  const theme = createTheme({
+    palette: {
+      mode: themeSettings.darkMode ? 'dark' : 'light',
+      primary: {
+        main: themeSettings.primaryColor,
+        light: themeSettings.primaryColor + '80',
+        dark: themeSettings.primaryColor,
+        lighter: themeSettings.primaryColor + '20',
+      },
+      secondary: {
+        main: themeSettings.secondaryColor,
+        light: themeSettings.secondaryColor + '80',
+        dark: themeSettings.secondaryColor,
+      },
+      success: {
+        main: '#2e7d32',
+        lighter: '#e8f5e9',
+        light: '#4caf50',
+      },
+      error: {
+        main: '#d32f2f',
+        lighter: '#ffebee',
+        light: '#f44336',
+      },
+      warning: {
+        main: '#ed6c02',
+        lighter: '#fff3e0',
+        light: '#ff9800',
+      },
+      info: {
+        main: '#0288d1',
+        lighter: '#e1f5fe',
+        light: '#03a9f4',
+      },
+      background: {
+        default: themeSettings.darkMode ? '#121212' : '#f5f5f5',
+        paper: themeSettings.darkMode ? '#1e1e1e' : '#ffffff',
+      },
     },
-    secondary: {
-      main: '#f50057',
-      light: '#ff4081',
-      dark: '#c51162',
+    typography: {
+      fontFamily: '"Poppins", "Roboto", "Helvetica", "Arial", sans-serif',
+      h1: {
+        fontWeight: 700,
+      },
+      h2: {
+        fontWeight: 600,
+      },
+      h3: {
+        fontWeight: 600,
+      },
     },
-    success: {
-      main: '#2e7d32',
-      lighter: '#e8f5e9',
-    },
-    error: {
-      main: '#d32f2f',
-      lighter: '#ffebee',
-    },
-    warning: {
-      main: '#ed6c02',
-      lighter: '#fff3e0',
-    },
-    info: {
-      main: '#0288d1',
-      lighter: '#e1f5fe',
-    },
-    background: {
-      default: '#f5f5f5',
-      paper: '#ffffff',
-    },
-  },
-  typography: {
-    fontFamily: '"Poppins", "Roboto", "Helvetica", "Arial", sans-serif',
-    h1: {
-      fontWeight: 700,
-    },
-    h2: {
-      fontWeight: 600,
-    },
-    h3: {
-      fontWeight: 600,
-    },
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-          textTransform: 'none',
-          fontWeight: 500,
+    components: {
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            borderRadius: 8,
+            textTransform: 'none',
+            fontWeight: 500,
+          },
+        },
+      },
+      MuiCard: {
+        styleOverrides: {
+          root: {
+            borderRadius: 12,
+          },
         },
       },
     },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderRadius: 12,
-        },
-      },
-    },
-  },
-});
+  });
 
-function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -113,7 +124,14 @@ function App() {
                         <Route path="/checkout" element={<Checkout />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/signup" element={<Signup />} />
-                        <Route path="/track-order" element={<OrderTracking />} />
+                        <Route
+                          path="/profile"
+                          element={
+                            <ProtectedRoute>
+                              <UserProfile />
+                            </ProtectedRoute>
+                          }
+                        />
                       </Routes>
                       <Footer />
                     </>
@@ -135,7 +153,9 @@ function App() {
                   <Route path="products" element={<AdminProducts />} />
                   <Route path="orders" element={<AdminOrders />} />
                   <Route path="users" element={<AdminUsers />} />
-                  <Route path="settings" element={<AdminDashboard />} />
+                  <Route path="feedback" element={<AdminFeedback />} />
+                  <Route path="reports" element={<AdminReports />} />
+                  <Route path="settings" element={<AdminSettings />} />
                 </Route>
               </Routes>
             </Router>
@@ -143,6 +163,14 @@ function App() {
         </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>
+  );
+};
+
+function App() {
+  return (
+    <ThemeSettingsProvider>
+      <AppContent />
+    </ThemeSettingsProvider>
   );
 }
 

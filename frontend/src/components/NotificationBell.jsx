@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import {
   IconButton,
   Badge,
-  Menu,
-  MenuItem,
+  Drawer,
   Typography,
   Box,
   Divider,
   Button,
+  Chip,
+  List,
+  ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
-  Chip,
 } from '@mui/material';
 import {
   Notifications,
@@ -19,6 +21,7 @@ import {
   CheckCircle,
   Delete,
   DoneAll,
+  Close,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -29,14 +32,14 @@ const MotionIconButton = motion(IconButton);
 const NotificationBell = () => {
   const navigate = useNavigate();
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const handleOpen = (event) => {
-    setAnchorEl(event.currentTarget);
+  const handleOpen = () => {
+    setDrawerOpen(true);
   };
 
   const handleClose = () => {
-    setAnchorEl(null);
+    setDrawerOpen(false);
   };
 
   const handleNotificationClick = (notification) => {
@@ -84,99 +87,174 @@ const NotificationBell = () => {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={handleOpen}
-        sx={{ color: 'white' }}
+        color="inherit"
       >
         <Badge badgeContent={unreadCount} color="error">
           <Notifications />
         </Badge>
       </MotionIconButton>
 
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
+      <Drawer
+        anchor="right"
+        open={drawerOpen}
         onClose={handleClose}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-        PaperProps={{
-          sx: {
-            width: 360,
-            maxHeight: 480,
+        sx={{
+          '& .MuiDrawer-paper': {
+            width: { xs: '100%', sm: 420 },
+            maxWidth: '100%',
           },
         }}
       >
-        <Box sx={{ px: 2, py: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6" fontWeight={600}>
-            Notifications
-          </Typography>
-          {unreadCount > 0 && (
-            <Button size="small" onClick={handleMarkAllRead} startIcon={<DoneAll />}>
-              Mark all read
-            </Button>
-          )}
+        {/* Header */}
+        <Box
+          sx={{
+            p: 2.5,
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <NotificationsActive />
+            <Typography variant="h6" fontWeight={600}>
+              Notifications
+            </Typography>
+            {unreadCount > 0 && (
+              <Chip 
+                label={unreadCount} 
+                size="small" 
+                sx={{ 
+                  bgcolor: 'rgba(255,255,255,0.2)', 
+                  color: 'white',
+                  fontWeight: 600,
+                }} 
+              />
+            )}
+          </Box>
+          <IconButton
+            onClick={handleClose}
+            sx={{ color: 'white' }}
+          >
+            <Close />
+          </IconButton>
         </Box>
+
+        {/* Mark all read button */}
+        {unreadCount > 0 && (
+          <Box sx={{ p: 2, bgcolor: 'action.hover' }}>
+            <Button
+              fullWidth
+              variant="outlined"
+              size="small"
+              onClick={handleMarkAllRead}
+              startIcon={<DoneAll />}
+              sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}
+            >
+              Mark all as read
+            </Button>
+          </Box>
+        )}
+
         <Divider />
 
+        {/* Notifications List */}
         {notifications.length === 0 ? (
-          <Box sx={{ p: 4, textAlign: 'center' }}>
-            <Notifications sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
-            <Typography color="text.secondary">No notifications</Typography>
+          <Box sx={{ p: 6, textAlign: 'center' }}>
+            <Notifications sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+            <Typography color="text.secondary" variant="h6">
+              No notifications
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              You're all caught up!
+            </Typography>
           </Box>
         ) : (
-          notifications.slice(0, 10).map((notification, index) => (
-            <MenuItem
-              key={notification.id}
-              onClick={() => handleNotificationClick(notification)}
-              sx={{
-                bgcolor: notification.read ? 'transparent' : 'action.hover',
-                borderLeft: notification.read ? 'none' : '3px solid',
-                borderColor: 'primary.main',
-                py: 1.5,
-              }}
-            >
-              <ListItemIcon>{getIcon(notification.type)}</ListItemIcon>
-              <ListItemText
-                primary={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography variant="body2" fontWeight={notification.read ? 400 : 600}>
-                      {notification.title}
-                    </Typography>
-                    {!notification.read && (
-                      <Chip label="New" size="small" color="primary" sx={{ height: 18 }} />
-                    )}
-                  </Box>
-                }
-                secondary={
-                  <>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      {notification.message}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {formatTime(notification.createdAt)}
-                    </Typography>
-                  </>
-                }
-              />
-              <IconButton
-                size="small"
-                onClick={(e) => handleDelete(notification.id, e)}
+          <List sx={{ p: 0 }}>
+            {notifications.map((notification) => (
+              <ListItem
+                key={notification.id}
+                disablePadding
+                sx={{
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                }}
               >
-                <Delete fontSize="small" />
-              </IconButton>
-            </MenuItem>
-          ))
+                <ListItemButton
+                  onClick={() => handleNotificationClick(notification)}
+                  sx={{
+                    bgcolor: notification.read ? 'transparent' : 'action.hover',
+                    borderLeft: notification.read ? 'none' : '4px solid',
+                    borderColor: 'primary.main',
+                    py: 2,
+                    '&:hover': {
+                      bgcolor: notification.read ? 'action.hover' : 'action.selected',
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 48 }}>
+                    {getIcon(notification.type)}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                        <Typography 
+                          variant="body2" 
+                          fontWeight={notification.read ? 500 : 700}
+                          sx={{ flex: 1 }}
+                        >
+                          {notification.title}
+                        </Typography>
+                        {!notification.read && (
+                          <Chip 
+                            label="New" 
+                            size="small" 
+                            color="primary" 
+                            sx={{ height: 20, fontSize: '0.7rem' }} 
+                          />
+                        )}
+                      </Box>
+                    }
+                    secondary={
+                      <>
+                        <Typography variant="body2" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
+                          {notification.message}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {formatTime(notification.createdAt)}
+                        </Typography>
+                      </>
+                    }
+                  />
+                  <IconButton
+                    size="small"
+                    onClick={(e) => handleDelete(notification.id, e)}
+                    sx={{ ml: 1 }}
+                  >
+                    <Delete fontSize="small" />
+                  </IconButton>
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
         )}
 
         {notifications.length > 10 && (
           <>
             <Divider />
-            <Box sx={{ p: 1, textAlign: 'center' }}>
-              <Button size="small" fullWidth>
-                View All Notifications
+            <Box sx={{ p: 2 }}>
+              <Button 
+                fullWidth 
+                variant="outlined"
+                sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}
+              >
+                View All Notifications ({notifications.length})
               </Button>
             </Box>
           </>
         )}
-      </Menu>
+      </Drawer>
     </>
   );
 };

@@ -207,6 +207,8 @@ const Categories = () => {
           onClick={() => handleOpenDialog()}
           sx={{
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            boxShadow: 'none',
+            '&:hover': { boxShadow: 'none' },
           }}
         >
           Add Category
@@ -235,7 +237,15 @@ const Categories = () => {
 
       {/* Desktop Table View */}
       {!isMobile ? (
-        <Card>
+        <MotionCard
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          sx={{
+            background: 'background.paper',
+            boxShadow: 'none',
+          }}
+        >
           <TableContainer>
             <Table>
               <TableHead>
@@ -314,7 +324,7 @@ const Categories = () => {
             onRowsPerPageChange={handleChangeRowsPerPage}
             rowsPerPageOptions={[5, 10, 25]}
           />
-        </Card>
+        </MotionCard>
       ) : (
         /* Mobile Card View */
         <>
@@ -325,6 +335,10 @@ const Categories = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 whileHover={{ y: -2 }}
+                sx={{
+                  background: 'background.paper',
+                  boxShadow: 'none',
+                }}
               >
                 <CardContent>
                   <Box sx={{ display: 'flex', gap: 2 }}>
@@ -361,6 +375,7 @@ const Categories = () => {
                           variant="outlined"
                           startIcon={<Edit />}
                           onClick={() => handleOpenDialog(category)}
+                          sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}
                         >
                           Edit
                         </Button>
@@ -370,6 +385,7 @@ const Categories = () => {
                           color="error"
                           startIcon={<Delete />}
                           onClick={() => handleOpenDeleteDialog(category)}
+                          sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}
                         >
                           Delete
                         </Button>
@@ -466,12 +482,14 @@ const Categories = () => {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleCloseDialog} sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}>Cancel</Button>
           <Button
             onClick={handleSave}
             variant="contained"
             sx={{
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              boxShadow: 'none',
+              '&:hover': { boxShadow: 'none' },
             }}
           >
             {selectedCategory ? 'Update' : 'Add'} Category
@@ -494,8 +512,8 @@ const Categories = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleDelete} color="error" variant="contained">
+          <Button onClick={() => setDeleteDialogOpen(false)} sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}>Cancel</Button>
+          <Button onClick={handleDelete} color="error" variant="contained" sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}>
             Delete
           </Button>
         </DialogActions>
@@ -506,12 +524,24 @@ const Categories = () => {
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
       >
         <Alert
           onClose={() => setSnackbar({ ...snackbar, open: false })}
           severity={snackbar.severity}
-          sx={{ width: '100%' }}
+          variant="filled"
+          sx={{
+            width: '100%',
+            minWidth: 300,
+            bgcolor: snackbar.severity === 'success' ? '#2e7d32' : 
+                     snackbar.severity === 'error' ? '#d32f2f' : 
+                     snackbar.severity === 'warning' ? '#ed6c02' : 
+                     '#0288d1',
+            color: 'white',
+            '& .MuiAlert-icon': {
+              color: 'white',
+            },
+          }}
         >
           {snackbar.message}
         </Alert>

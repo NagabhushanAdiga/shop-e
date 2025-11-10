@@ -20,18 +20,20 @@ import {
   LocationOn,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { useThemeSettings } from '../context/ThemeContext';
 
 const MotionIconButton = motion(IconButton);
 
 const Footer = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { themeSettings } = useThemeSettings();
 
   return (
     <Box
       component="footer"
       sx={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: `linear-gradient(135deg, ${themeSettings.headerGradientStart} 0%, ${themeSettings.headerGradientEnd} 100%)`,
         color: 'white',
         mt: 'auto',
         py: { xs: 4, md: 6 },

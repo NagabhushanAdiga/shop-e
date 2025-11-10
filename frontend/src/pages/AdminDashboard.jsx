@@ -31,6 +31,9 @@ import {
   useTheme,
   Alert,
   Snackbar,
+  Button as MuiButton,
+  Box as MuiBox,
+  InputAdornment,
 } from '@mui/material';
 import {
   Edit,
@@ -40,6 +43,10 @@ import {
   AttachMoney,
   ShoppingCart,
   TrendingUp,
+  CloudUpload,
+  Image as ImageIcon,
+  Search,
+  FilterList,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { loadProducts, saveProducts, initialProducts } from '../data/products';
@@ -55,6 +62,8 @@ const AdminDashboard = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('All');
 
   const [formData, setFormData] = useState({
     id: null,
@@ -67,12 +76,23 @@ const AdminDashboard = () => {
     stock: 0,
     featured: false,
   });
+  
+  const [imagePreview, setImagePreview] = useState(null);
 
   useEffect(() => {
     setProducts(loadProducts());
   }, []);
 
   const categories = ['Electronics', 'Fashion', 'Home', 'Sports', 'Accessories'];
+  const allCategories = ['All', ...categories];
+
+  // Filter products based on search and category
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         product.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = categoryFilter === 'All' || product.category === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
 
   const handleOpenAddDialog = () => {
     setFormData({
@@ -87,6 +107,7 @@ const AdminDashboard = () => {
       featured: false,
     });
     setSelectedProduct(null);
+    setImagePreview(null);
     setEditDialogOpen(true);
   };
 
@@ -103,12 +124,14 @@ const AdminDashboard = () => {
       featured: product.featured,
     });
     setSelectedProduct(product);
+    setImagePreview(product.image);
     setEditDialogOpen(true);
   };
 
   const handleCloseEditDialog = () => {
     setEditDialogOpen(false);
     setSelectedProduct(null);
+    setImagePreview(null);
   };
 
   const handleFormChange = (e) => {
@@ -117,6 +140,42 @@ const AdminDashboard = () => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setSnackbar({
+          open: true,
+          message: 'Image size should be less than 5MB',
+          severity: 'error',
+        });
+        return;
+      }
+
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        setSnackbar({
+          open: true,
+          message: 'Please select a valid image file',
+          severity: 'error',
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const imageData = reader.result;
+        setFormData((prev) => ({
+          ...prev,
+          image: imageData,
+        }));
+        setImagePreview(imageData);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSaveProduct = () => {
@@ -227,29 +286,33 @@ const AdminDashboard = () => {
   const totalValue = products.reduce((sum, p) => sum + p.price * p.stock, 0);
   const lowStockProducts = products.filter((p) => p.stock < 20).length;
   const avgPrice = products.length > 0 ? products.reduce((sum, p) => sum + p.price, 0) / products.length : 0;
+  
+  // Filtered stats
+  const filteredCount = filteredProducts.length;
+  const filteredValue = filteredProducts.reduce((sum, p) => sum + p.price * p.stock, 0);
 
   return (
-    <Box sx={{ minHeight: '80vh', bgcolor: 'background.default', py: 4 }}>
-      <Container maxWidth="xl">
+    <Box sx={{ minHeight: '100vh', width: '100%' }}>
         {/* Header */}
         <Box
           sx={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            mb: 4,
+            mb: 3,
             flexWrap: 'wrap',
             gap: 2,
           }}
         >
-          <Typography variant={isMobile ? 'h4' : 'h3'} fontWeight={600}>
-            Admin Dashboard
+          <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight={600}>
+            Product Management
           </Typography>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Button
               variant="outlined"
               color="secondary"
               onClick={handleResetProducts}
+              sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}
             >
               Reset Products
             </Button>
@@ -259,6 +322,8 @@ const AdminDashboard = () => {
               onClick={handleOpenAddDialog}
               sx={{
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                boxShadow: 'none',
+                '&:hover': { boxShadow: 'none' },
               }}
             >
               Add Product
@@ -266,8 +331,48 @@ const AdminDashboard = () => {
           </Box>
         </Box>
 
+        {/* Search and Filter */}
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Grid item xs={12} md={8}>
+            <TextField
+              fullWidth
+              placeholder="Search products by name or description..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <FormControl fullWidth>
+              <InputLabel>Category Filter</InputLabel>
+              <Select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                label="Category Filter"
+                startAdornment={
+                  <InputAdornment position="start">
+                    <FilterList />
+                  </InputAdornment>
+                }
+              >
+                {allCategories.map((cat) => (
+                  <MenuItem key={cat} value={cat}>
+                    {cat}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
+
         {/* Statistics Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid container spacing={2} sx={{ mb: 3 }}>
           {[
             {
               title: 'Total Products',
@@ -299,10 +404,24 @@ const AdminDashboard = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
-                whileHover={{ y: -5 }}
-                sx={{ height: '100%' }}
+                whileHover={{ y: -8, scale: 1.02 }}
+                sx={{
+                  height: '100%',
+                  minHeight: 140,
+                  background: index === 0 
+                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    : index === 1
+                    ? 'linear-gradient(135deg, #52c41a 0%, #1890ff 100%)'
+                    : index === 2
+                    ? 'linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)'
+                    : 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)',
+                  boxShadow: 'none',
+                  color: 'white',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
               >
-                <CardContent>
+                <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <Box
                     sx={{
                       display: 'flex',
@@ -311,14 +430,26 @@ const AdminDashboard = () => {
                     }}
                   >
                     <Box>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                      <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)' }} gutterBottom fontWeight={500}>
                         {stat.title}
                       </Typography>
-                      <Typography variant="h4" fontWeight={700}>
+                      <Typography variant="h4" fontWeight={700} sx={{ color: 'white' }}>
                         {stat.value}
                       </Typography>
                     </Box>
-                    <Box sx={{ color: stat.color }}>{stat.icon}</Box>
+                    <Box
+                      sx={{
+                        color: 'white',
+                        bgcolor: 'rgba(255,255,255,0.2)',
+                        borderRadius: 2,
+                        p: 1.5,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {stat.icon}
+                    </Box>
                   </Box>
                 </CardContent>
               </MotionCard>
@@ -327,17 +458,47 @@ const AdminDashboard = () => {
         </Grid>
 
         {/* Products Table */}
-        <Card>
+        <MotionCard
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          sx={{
+            background: 'background.paper',
+            boxShadow: 'none',
+          }}
+        >
           <CardContent>
-            <Typography variant="h5" gutterBottom fontWeight={600}>
-              Product Management
-            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h5" gutterBottom fontWeight={600}>
+                Product Management
+              </Typography>
+              {searchQuery || categoryFilter !== 'All' ? (
+                <Typography variant="body2" color="text.secondary">
+                  Showing {filteredCount} of {totalProducts} products
+                </Typography>
+              ) : null}
+            </Box>
 
             {isMobile ? (
               // Mobile Card View
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-                {products.map((product) => (
-                  <Card key={product.id} variant="outlined">
+                {filteredProducts.length === 0 ? (
+                  <Box sx={{ textAlign: 'center', py: 4 }}>
+                    <Typography variant="body1" color="text.secondary">
+                      No products found
+                    </Typography>
+                  </Box>
+                ) : filteredProducts.map((product) => (
+                  <MotionCard
+                    key={product.id}
+                    whileHover={{ scale: 1.01, y: -2 }}
+                    sx={{
+                      background: 'background.paper',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      boxShadow: 'none',
+                    }}
+                  >
                     <CardContent>
                       <Box sx={{ display: 'flex', gap: 2 }}>
                         <Avatar
@@ -362,6 +523,7 @@ const AdminDashboard = () => {
                               variant="outlined"
                               startIcon={<Edit />}
                               onClick={() => handleOpenEditDialog(product)}
+                              sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}
                             >
                               Edit
                             </Button>
@@ -371,6 +533,7 @@ const AdminDashboard = () => {
                               color="error"
                               startIcon={<Delete />}
                               onClick={() => handleOpenDeleteDialog(product)}
+                              sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}
                             >
                               Delete
                             </Button>
@@ -378,12 +541,12 @@ const AdminDashboard = () => {
                         </Box>
                       </Box>
                     </CardContent>
-                  </Card>
+                  </MotionCard>
                 ))}
               </Box>
             ) : (
               // Desktop Table View
-              <TableContainer component={Paper} sx={{ mt: 2 }}>
+              <TableContainer component={Paper} sx={{ mt: 2, bgcolor: 'background.paper' }}>
                 <Table>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'background.default' }}>
@@ -398,7 +561,15 @@ const AdminDashboard = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {products.map((product) => (
+                    {filteredProducts.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                          <Typography variant="body1" color="text.secondary">
+                            No products found
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ) : filteredProducts.map((product) => (
                       <TableRow
                         key={product.id}
                         sx={{
@@ -453,7 +624,7 @@ const AdminDashboard = () => {
               </TableContainer>
             )}
           </CardContent>
-        </Card>
+        </MotionCard>
 
         {/* Add/Edit Product Dialog */}
         <Dialog
@@ -521,14 +692,82 @@ const AdminDashboard = () => {
                 />
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Image URL"
-                  name="image"
-                  value={formData.image}
-                  onChange={handleFormChange}
-                  required
-                />
+                <Box>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Product Image
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: isMobile ? 'column' : 'row',
+                      gap: 2,
+                      alignItems: 'center',
+                    }}
+                  >
+                    {/* Image Preview */}
+                    {imagePreview && (
+                      <Box
+                        sx={{
+                          width: 150,
+                          height: 150,
+                          borderRadius: 2,
+                          overflow: 'hidden',
+                          border: '2px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                          }}
+                        />
+                      </Box>
+                    )}
+                    
+                    {/* Upload Button */}
+                    <Box sx={{ flex: 1, width: '100%' }}>
+                      <Button
+                        component="label"
+                        variant="outlined"
+                        startIcon={<CloudUpload />}
+                        fullWidth
+                        sx={{ mb: 2, boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}
+                      >
+                        Upload Image from Device
+                        <input
+                          type="file"
+                          hidden
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                        />
+                      </Button>
+                      
+                      <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                        Or enter image URL below
+                      </Typography>
+                      
+                      <TextField
+                        fullWidth
+                        size="small"
+                        placeholder="https://example.com/image.jpg"
+                        name="image"
+                        value={formData.image}
+                        onChange={(e) => {
+                          handleFormChange(e);
+                          setImagePreview(e.target.value);
+                        }}
+                      />
+                      
+                      <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+                        Max file size: 5MB. Supported formats: JPG, PNG, GIF, WebP
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
               </Grid>
               <Grid item xs={12} sm={4}>
                 <TextField
@@ -570,12 +809,14 @@ const AdminDashboard = () => {
             </Grid>
           </DialogContent>
           <DialogActions sx={{ p: 2.5 }}>
-            <Button onClick={handleCloseEditDialog}>Cancel</Button>
+            <Button onClick={handleCloseEditDialog} sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}>Cancel</Button>
             <Button
               onClick={handleSaveProduct}
               variant="contained"
               sx={{
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                boxShadow: 'none',
+                '&:hover': { boxShadow: 'none' },
               }}
             >
               {selectedProduct ? 'Update' : 'Add'} Product
@@ -598,8 +839,8 @@ const AdminDashboard = () => {
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleCloseDeleteDialog}>Cancel</Button>
-            <Button onClick={handleDeleteProduct} color="error" variant="contained">
+            <Button onClick={handleCloseDeleteDialog} sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}>Cancel</Button>
+            <Button onClick={handleDeleteProduct} color="error" variant="contained" sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}>
               Delete
             </Button>
           </DialogActions>
@@ -615,6 +856,8 @@ const AdminDashboard = () => {
               bottom: 16,
               right: 16,
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              boxShadow: 'none',
+              '&:hover': { boxShadow: 'none' },
             }}
             onClick={handleOpenAddDialog}
           >
@@ -627,17 +870,28 @@ const AdminDashboard = () => {
           open={snackbar.open}
           autoHideDuration={4000}
           onClose={() => setSnackbar({ ...snackbar, open: false })}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         >
           <Alert
             onClose={() => setSnackbar({ ...snackbar, open: false })}
             severity={snackbar.severity}
-            sx={{ width: '100%' }}
+            variant="filled"
+            sx={{
+              width: '100%',
+              minWidth: 300,
+              bgcolor: snackbar.severity === 'success' ? '#2e7d32' : 
+                       snackbar.severity === 'error' ? '#d32f2f' : 
+                       snackbar.severity === 'warning' ? '#ed6c02' : 
+                       '#0288d1',
+              color: 'white',
+              '& .MuiAlert-icon': {
+                color: 'white',
+              },
+            }}
           >
             {snackbar.message}
           </Alert>
         </Snackbar>
-      </Container>
     </Box>
   );
 };

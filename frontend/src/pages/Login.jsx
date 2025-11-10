@@ -26,7 +26,7 @@ const Login = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
-  const { login, user } = useAuth();
+  const { login, user, isAdmin } = useAuth();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -39,9 +39,13 @@ const Login = () => {
   // Redirect if already logged in
   React.useEffect(() => {
     if (user) {
-      navigate('/');
+      if (isAdmin) {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/');
+      }
     }
-  }, [user, navigate]);
+  }, [user, isAdmin, navigate]);
 
   const handleChange = (e) => {
     setFormData({
@@ -63,8 +67,13 @@ const Login = () => {
     }
 
     try {
-      await login(formData.email, formData.password);
-      navigate('/');
+      const userData = await login(formData.email, formData.password);
+      // Redirect based on role
+      if (userData.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       setError('Invalid email or password');
     } finally {
@@ -176,26 +185,6 @@ const Login = () => {
                 {loading ? 'Signing In...' : 'Sign In'}
               </Button>
             </form>
-
-            <Divider sx={{ my: 3 }}>OR</Divider>
-
-            {/* Social Login Buttons */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Button
-                fullWidth
-                variant="outlined"
-                sx={{ py: 1.5 }}
-              >
-                Continue with Google
-              </Button>
-              <Button
-                fullWidth
-                variant="outlined"
-                sx={{ py: 1.5 }}
-              >
-                Continue with Facebook
-              </Button>
-            </Box>
 
             {/* Sign Up Link */}
             <Box sx={{ textAlign: 'center', mt: 3 }}>

@@ -1,0 +1,721 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Card,
+  CardContent,
+  Grid,
+  Typography,
+  Paper,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button,
+  Divider,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
+  useTheme,
+  useMediaQuery,
+  LinearProgress,
+} from '@mui/material';
+import {
+  TrendingUp,
+  TrendingDown,
+  ShoppingCart,
+  AttachMoney,
+  People,
+  Inventory,
+  LocalShipping,
+  Assessment,
+  Download,
+  CalendarToday,
+  BarChart,
+} from '@mui/icons-material';
+import { motion } from 'framer-motion';
+import { loadOrders } from '../../data/orders';
+import { loadUsers } from '../../data/users';
+import { loadProducts } from '../../data/products';
+
+const MotionCard = motion(Card);
+
+const Reports = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
+  const [orders, setOrders] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [reportType, setReportType] = useState('overview');
+  const [dateRange, setDateRange] = useState('30days');
+
+  useEffect(() => {
+    setOrders(loadOrders());
+    setUsers(loadUsers());
+    setProducts(loadProducts());
+  }, []);
+
+  // Calculate statistics
+  const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+  const totalOrders = orders.length;
+  const totalUsers = users.length;
+  const activeUsers = users.filter(u => u.status === 'active').length;
+  const totalProducts = products.length;
+  
+  const completedOrders = orders.filter(o => o.status === 'delivered').length;
+  const pendingOrders = orders.filter(o => o.status === 'pending' || o.status === 'processing').length;
+  const cancelledOrders = orders.filter(o => o.status === 'cancelled').length;
+  
+  const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+  
+  // Calculate monthly growth (mock data)
+  const revenueGrowth = 12.5;
+  const ordersGrowth = 8.3;
+  const usersGrowth = 15.2;
+
+  // Top selling products
+  const productSales = {};
+  orders.forEach(order => {
+    order.items.forEach(item => {
+      if (productSales[item.name]) {
+        productSales[item.name].quantity += item.quantity;
+        productSales[item.name].revenue += item.price * item.quantity;
+      } else {
+        productSales[item.name] = {
+          name: item.name,
+          quantity: item.quantity,
+          revenue: item.price * item.quantity,
+        };
+      }
+    });
+  });
+
+  const topProducts = Object.values(productSales)
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5);
+
+  // Top customers
+  const customerSpending = {};
+  orders.forEach(order => {
+    if (customerSpending[order.userId]) {
+      customerSpending[order.userId].total += order.total;
+      customerSpending[order.userId].orders += 1;
+    } else {
+      const user = users.find(u => u.id === order.userId);
+      customerSpending[order.userId] = {
+        userId: order.userId,
+        name: user?.name || 'Unknown',
+        email: user?.email || 'N/A',
+        total: order.total,
+        orders: 1,
+      };
+    }
+  });
+
+  const topCustomers = Object.values(customerSpending)
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 5);
+
+  const StatCard = ({ title, value, icon, trend, trendValue, gradient }) => (
+    <MotionCard
+      whileHover={{ y: -8, scale: 1.02 }}
+      transition={{ duration: 0.2 }}
+      sx={{
+        height: '100%',
+        minHeight: 140,
+        background: gradient,
+        color: 'white',
+        boxShadow: 'none',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+          <Box>
+            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.9)' }} gutterBottom fontWeight={500}>
+              {title}
+            </Typography>
+            <Typography variant="h4" fontWeight={700} color="white">
+              {value}
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              width: 56,
+              height: 56,
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: 'rgba(255,255,255,0.2)',
+              color: 'white',
+            }}
+          >
+            {icon}
+          </Box>
+        </Box>
+        {trend && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            {trend === 'up' ? (
+              <TrendingUp sx={{ fontSize: 18, color: 'rgba(255,255,255,0.9)' }} />
+            ) : (
+              <TrendingDown sx={{ fontSize: 18, color: 'rgba(255,255,255,0.9)' }} />
+            )}
+            <Typography
+              variant="caption"
+              sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 600 }}
+            >
+              {trendValue}%
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.8)' }}>
+              vs last month
+            </Typography>
+          </Box>
+        )}
+      </CardContent>
+    </MotionCard>
+  );
+
+  const handleExportReport = () => {
+    // Mock export functionality
+    const reportData = {
+      reportType,
+      dateRange,
+      generatedAt: new Date().toISOString(),
+      summary: {
+        totalRevenue,
+        totalOrders,
+        totalUsers,
+        activeUsers,
+        averageOrderValue,
+      },
+      topProducts,
+      topCustomers,
+    };
+    
+    const dataStr = JSON.stringify(reportData, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+    const exportFileDefaultName = `report-${reportType}-${new Date().toISOString().split('T')[0]}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
+
+  return (
+    <Box>
+      {/* Header */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+        <Box>
+          <Typography variant="h4" fontWeight={600} gutterBottom>
+            Reports & Analytics
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            View detailed reports and insights about your business
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          startIcon={<Download />}
+          onClick={handleExportReport}
+          sx={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            boxShadow: 'none',
+            '&:hover': { boxShadow: 'none' },
+          }}
+        >
+          Export Report
+        </Button>
+      </Box>
+
+      {/* Filters */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={4}>
+          <FormControl fullWidth>
+            <InputLabel>Report Type</InputLabel>
+            <Select
+              value={reportType}
+              label="Report Type"
+              onChange={(e) => setReportType(e.target.value)}
+            >
+              <MenuItem value="overview">Overview</MenuItem>
+              <MenuItem value="sales">Sales Report</MenuItem>
+              <MenuItem value="customers">Customer Report</MenuItem>
+              <MenuItem value="products">Product Report</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <FormControl fullWidth>
+            <InputLabel>Date Range</InputLabel>
+            <Select
+              value={dateRange}
+              label="Date Range"
+              onChange={(e) => setDateRange(e.target.value)}
+            >
+              <MenuItem value="7days">Last 7 Days</MenuItem>
+              <MenuItem value="30days">Last 30 Days</MenuItem>
+              <MenuItem value="90days">Last 90 Days</MenuItem>
+              <MenuItem value="year">This Year</MenuItem>
+              <MenuItem value="all">All Time</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+      </Grid>
+
+      {/* Key Metrics */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} lg={3}>
+          <StatCard
+            title="Total Revenue"
+            value={`$${totalRevenue.toFixed(2)}`}
+            icon={<AttachMoney sx={{ fontSize: 28 }} />}
+            trend="up"
+            trendValue={revenueGrowth}
+            gradient="linear-gradient(135deg, #52c41a 0%, #1890ff 100%)"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} lg={3}>
+          <StatCard
+            title="Total Orders"
+            value={totalOrders}
+            icon={<ShoppingCart sx={{ fontSize: 28 }} />}
+            trend="up"
+            trendValue={ordersGrowth}
+            gradient="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} lg={3}>
+          <StatCard
+            title="Total Users"
+            value={totalUsers}
+            icon={<People sx={{ fontSize: 28 }} />}
+            trend="up"
+            trendValue={usersGrowth}
+            gradient="linear-gradient(135deg, #0288d1 0%, #00acc1 100%)"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} lg={3}>
+          <StatCard
+            title="Avg Order Value"
+            value={`$${averageOrderValue.toFixed(2)}`}
+            icon={<BarChart sx={{ fontSize: 28 }} />}
+            gradient="linear-gradient(135deg, #faad14 0%, #ffc53d 100%)"
+          />
+        </Grid>
+      </Grid>
+
+      {/* Order Status Breakdown */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={6}>
+          <MotionCard
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4 }}
+            sx={{
+              background: 'background.paper',
+              boxShadow: 'none',
+            }}
+          >
+            <CardContent>
+              <Typography variant="h6" fontWeight={600} gutterBottom>
+                Order Status Breakdown
+              </Typography>
+              <Divider sx={{ mb: 3 }} />
+              
+              <Box sx={{ mb: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2">Delivered</Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {completedOrders} ({totalOrders > 0 ? ((completedOrders / totalOrders) * 100).toFixed(1) : 0}%)
+                  </Typography>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={totalOrders > 0 ? (completedOrders / totalOrders) * 100 : 0}
+                  sx={{ height: 8, borderRadius: 1, bgcolor: 'success.light', '& .MuiLinearProgress-bar': { bgcolor: 'success.main' } }}
+                />
+              </Box>
+
+              <Box sx={{ mb: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2">Pending/Processing</Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {pendingOrders} ({totalOrders > 0 ? ((pendingOrders / totalOrders) * 100).toFixed(1) : 0}%)
+                  </Typography>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={totalOrders > 0 ? (pendingOrders / totalOrders) * 100 : 0}
+                  sx={{ height: 8, borderRadius: 1, bgcolor: 'warning.light', '& .MuiLinearProgress-bar': { bgcolor: 'warning.main' } }}
+                />
+              </Box>
+
+              <Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2">Cancelled</Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {cancelledOrders} ({totalOrders > 0 ? ((cancelledOrders / totalOrders) * 100).toFixed(1) : 0}%)
+                  </Typography>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={totalOrders > 0 ? (cancelledOrders / totalOrders) * 100 : 0}
+                  sx={{ height: 8, borderRadius: 1, bgcolor: 'error.light', '& .MuiLinearProgress-bar': { bgcolor: 'error.main' } }}
+                />
+              </Box>
+            </CardContent>
+          </MotionCard>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <MotionCard
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4 }}
+            sx={{
+              background: 'background.paper',
+              boxShadow: 'none',
+            }}
+          >
+            <CardContent>
+              <Typography variant="h6" fontWeight={600} gutterBottom>
+                User Statistics
+              </Typography>
+              <Divider sx={{ mb: 3 }} />
+              
+              <Grid container spacing={3}>
+                <Grid item xs={6}>
+                  <Box sx={{ textAlign: 'center' }}>
+                    <Box
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        bgcolor: 'success.light',
+                        color: 'success.main',
+                        mx: 'auto',
+                        mb: 2,
+                      }}
+                    >
+                      <People sx={{ fontSize: 36 }} />
+                    </Box>
+                    <Typography variant="h4" fontWeight={700}>
+                      {activeUsers}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Active Users
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={6}>
+                  <Box sx={{ textAlign: 'center' }}>
+                    <Box
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        bgcolor: 'warning.light',
+                        color: 'warning.main',
+                        mx: 'auto',
+                        mb: 2,
+                      }}
+                    >
+                      <Inventory sx={{ fontSize: 36 }} />
+                    </Box>
+                    <Typography variant="h4" fontWeight={700}>
+                      {totalProducts}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Total Products
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </MotionCard>
+        </Grid>
+      </Grid>
+
+      {/* Top Selling Products */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} lg={6}>
+          <MotionCard
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            sx={{
+              background: 'background.paper',
+              boxShadow: 'none',
+            }}
+          >
+            <CardContent>
+              <Typography variant="h6" fontWeight={600} gutterBottom>
+                Top Selling Products
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Product</TableCell>
+                      <TableCell align="right">Quantity</TableCell>
+                      <TableCell align="right">Revenue</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {topProducts.map((product, index) => (
+                      <TableRow key={index} hover>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Chip
+                              label={index + 1}
+                              size="small"
+                              sx={{
+                                bgcolor: index === 0 ? 'warning.main' : 'grey.300',
+                                color: index === 0 ? 'white' : 'text.primary',
+                                fontWeight: 600,
+                                minWidth: 28,
+                              }}
+                            />
+                            <Typography variant="body2">{product.name}</Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Typography variant="body2" fontWeight={600}>
+                            {product.quantity}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Typography variant="body2" fontWeight={600} color="success.main">
+                            ${product.revenue.toFixed(2)}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </MotionCard>
+        </Grid>
+
+        {/* Top Customers */}
+        <Grid item xs={12} lg={6}>
+          <MotionCard
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            sx={{
+              background: 'background.paper',
+              boxShadow: 'none',
+            }}
+          >
+            <CardContent>
+              <Typography variant="h6" fontWeight={600} gutterBottom>
+                Top Customers
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Customer</TableCell>
+                      <TableCell align="right">Orders</TableCell>
+                      <TableCell align="right">Total Spent</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {topCustomers.map((customer, index) => (
+                      <TableRow key={index} hover>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Chip
+                              label={index + 1}
+                              size="small"
+                              sx={{
+                                bgcolor: index === 0 ? 'primary.main' : 'grey.300',
+                                color: index === 0 ? 'white' : 'text.primary',
+                                fontWeight: 600,
+                                minWidth: 28,
+                              }}
+                            />
+                            <Box>
+                              <Typography variant="body2" fontWeight={600}>
+                                {customer.name}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {customer.email}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Typography variant="body2" fontWeight={600}>
+                            {customer.orders}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Typography variant="body2" fontWeight={600} color="success.main">
+                            ${customer.total.toFixed(2)}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </MotionCard>
+        </Grid>
+      </Grid>
+
+      {/* Additional Insights */}
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={4}>
+          <MotionCard
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
+            sx={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+              boxShadow: 'none',
+            }}
+          >
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: 'rgba(255,255,255,0.2)',
+                    color: 'white',
+                  }}
+                >
+                  <LocalShipping />
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.9)' }}>
+                    Delivery Rate
+                  </Typography>
+                  <Typography variant="h5" fontWeight={700} color="white">
+                    {totalOrders > 0 ? ((completedOrders / totalOrders) * 100).toFixed(1) : 0}%
+                  </Typography>
+                </Box>
+              </Box>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
+                Orders successfully delivered
+              </Typography>
+            </CardContent>
+          </MotionCard>
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <MotionCard
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.4 }}
+            sx={{
+              background: 'linear-gradient(135deg, #52c41a 0%, #1890ff 100%)',
+              color: 'white',
+              boxShadow: 'none',
+            }}
+          >
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: 'rgba(255,255,255,0.2)',
+                    color: 'white',
+                  }}
+                >
+                  <People />
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.9)' }}>
+                    User Activity Rate
+                  </Typography>
+                  <Typography variant="h5" fontWeight={700} color="white">
+                    {totalUsers > 0 ? ((activeUsers / totalUsers) * 100).toFixed(1) : 0}%
+                  </Typography>
+                </Box>
+              </Box>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
+                Currently active users
+              </Typography>
+            </CardContent>
+          </MotionCard>
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <MotionCard
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.5 }}
+            sx={{
+              background: 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)',
+              color: 'white',
+              boxShadow: 'none',
+            }}
+          >
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: 'rgba(255,255,255,0.2)',
+                    color: 'white',
+                  }}
+                >
+                  <Assessment />
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.9)' }}>
+                    Conversion Rate
+                  </Typography>
+                  <Typography variant="h5" fontWeight={700} color="white">
+                    {totalUsers > 0 ? ((totalOrders / totalUsers) * 100).toFixed(1) : 0}%
+                  </Typography>
+                </Box>
+              </Box>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
+                Users who made purchases
+              </Typography>
+            </CardContent>
+          </MotionCard>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+};
+
+export default Reports;
+

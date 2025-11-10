@@ -31,11 +31,16 @@ import {
   Logout,
   ChevronLeft,
   Notifications,
+  Assessment,
+  Feedback as FeedbackIcon,
+  Brightness4,
+  Brightness7,
 } from '@mui/icons-material';
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
+import { useThemeSettings } from '../context/ThemeContext';
 import NotificationBell from '../components/NotificationBell';
 
 const drawerWidth = 280;
@@ -47,6 +52,7 @@ const AdminLayout = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
   const { unreadCount } = useNotifications();
+  const { themeSettings, toggleDarkMode } = useThemeSettings();
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -75,6 +81,8 @@ const AdminLayout = () => {
     { text: 'Products', icon: <Inventory />, path: '/admin/products' },
     { text: 'Orders', icon: <OrdersIcon />, path: '/admin/orders' },
     { text: 'Users', icon: <People />, path: '/admin/users' },
+    { text: 'Feedback', icon: <FeedbackIcon />, path: '/admin/feedback' },
+    { text: 'Reports', icon: <Assessment />, path: '/admin/reports' },
     { text: 'Settings', icon: <Settings />, path: '/admin/settings' },
   ];
 
@@ -84,7 +92,7 @@ const AdminLayout = () => {
       <Box
         sx={{
           p: 3,
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: `linear-gradient(135deg, ${themeSettings.headerGradientStart} 0%, ${themeSettings.headerGradientEnd} 100%)`,
           color: 'white',
           display: 'flex',
           alignItems: 'center',
@@ -196,6 +204,11 @@ const AdminLayout = () => {
             {menuItems.find((item) => item.path === location.pathname)?.text || 'Admin'}
           </Typography>
 
+          {/* Dark Mode Toggle */}
+          <IconButton onClick={toggleDarkMode} color="inherit" sx={{ mr: 1 }}>
+            {themeSettings.darkMode ? <Brightness7 /> : <Brightness4 />}
+          </IconButton>
+
           {/* Notification Bell */}
           <Box sx={{ mr: 1 }}>
             <NotificationBell />
@@ -208,6 +221,7 @@ const AdminLayout = () => {
                 bgcolor: 'primary.main',
                 width: 36,
                 height: 36,
+                color: 'white',
               }}
             >
               {user?.name?.charAt(0).toUpperCase()}

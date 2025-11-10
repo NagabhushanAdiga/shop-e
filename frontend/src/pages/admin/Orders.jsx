@@ -179,25 +179,40 @@ const Orders = () => {
 
       {/* Statistics Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        {orderStatuses.map((status) => {
+        {orderStatuses.map((status, index) => {
           const count = orders.filter((o) => o.status === status.value).length;
           return (
             <Grid item xs={6} sm={6} md={2.4} key={status.value}>
-              <Card>
-                <CardContent>
+              <MotionCard
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+                whileHover={{ y: -8, scale: 1.02 }}
+                sx={{
+                  height: '100%',
+                  minHeight: 120,
+                  background: `linear-gradient(135deg, ${status.color === 'warning' ? '#ed6c0215' : status.color === 'success' ? '#2e7d3215' : status.color === 'error' ? '#d32f2f15' : status.color === 'info' ? '#0288d115' : '#667eea15'} 0%, ${status.color === 'warning' ? '#ed6c0230' : status.color === 'success' ? '#2e7d3230' : status.color === 'error' ? '#d32f2f30' : status.color === 'info' ? '#0288d130' : '#667eea30'} 100%)`,
+                  borderLeft: `4px solid`,
+                  borderColor: `${status.color}.main`,
+                  boxShadow: 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                     <Box sx={{ color: `${status.color}.main` }}>
                       {getStatusIcon(status.value)}
                     </Box>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary" fontWeight={500}>
                       {status.label}
                     </Typography>
                   </Box>
-                  <Typography variant="h4" fontWeight={700}>
+                  <Typography variant="h4" fontWeight={700} sx={{ color: `${status.color}.main` }}>
                     {count}
                   </Typography>
                 </CardContent>
-              </Card>
+              </MotionCard>
             </Grid>
           );
         })}
@@ -205,7 +220,15 @@ const Orders = () => {
 
       {/* Orders Table/Cards */}
       {!isMobile ? (
-        <Card>
+        <MotionCard
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          sx={{
+            background: 'background.paper',
+            boxShadow: 'none',
+          }}
+        >
           <TableContainer>
             <Table>
               <TableHead>
@@ -215,7 +238,8 @@ const Orders = () => {
                   <TableCell align="center"><Typography fontWeight={600}>Items</Typography></TableCell>
                   <TableCell align="right"><Typography fontWeight={600}>Total</Typography></TableCell>
                   <TableCell><Typography fontWeight={600}>Status</Typography></TableCell>
-                  <TableCell><Typography fontWeight={600}>Payment</Typography></TableCell>
+                  <TableCell><Typography fontWeight={600}>Payment Method</Typography></TableCell>
+                  <TableCell><Typography fontWeight={600}>Payment Status</Typography></TableCell>
                   <TableCell><Typography fontWeight={600}>Date</Typography></TableCell>
                   <TableCell align="right"><Typography fontWeight={600}>Actions</Typography></TableCell>
                 </TableRow>
@@ -248,7 +272,18 @@ const Orders = () => {
                         size="small"
                         color={getStatusColor(order.status)}
                         icon={getStatusIcon(order.status)}
+                        sx={{
+                          '& .MuiChip-icon': {
+                            marginLeft: '-2px',
+                            marginRight: '6px',
+                          },
+                        }}
                       />
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2">
+                        {order.paymentMethod || 'Card'}
+                      </Typography>
                     </TableCell>
                     <TableCell>
                       <Chip
@@ -294,7 +329,7 @@ const Orders = () => {
             onRowsPerPageChange={handleChangeRowsPerPage}
             rowsPerPageOptions={[5, 10, 25, 50]}
           />
-        </Card>
+        </MotionCard>
       ) : (
         /* Mobile Card View */
         <>
@@ -323,9 +358,20 @@ const Orders = () => {
                   <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
                     {order.customer.email}
                   </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, my: 1 }}>
+                  <Box sx={{ display: 'flex', gap: 1, my: 1, flexWrap: 'wrap' }}>
                     <Chip label={`${order.items.length} items`} size="small" />
-                    <Chip label={order.paymentStatus} size="small" color="success" />
+                    <Chip 
+                      label={order.paymentMethod || 'Card'} 
+                      size="small" 
+                      variant="outlined"
+                    />
+                    <Chip 
+                      label={order.paymentStatus} 
+                      size="small" 
+                      color={
+                        paymentStatuses.find((p) => p.value === order.paymentStatus)?.color || 'default'
+                      }
+                    />
                   </Box>
                   <Typography variant="h6" color="success.main" fontWeight={700}>
                     ${order.total.toFixed(2)}
@@ -401,6 +447,12 @@ const Orders = () => {
                         label={selectedOrder.status}
                         color={getStatusColor(selectedOrder.status)}
                         icon={getStatusIcon(selectedOrder.status)}
+                        sx={{
+                          '& .MuiChip-icon': {
+                            marginLeft: '-2px',
+                            marginRight: '6px',
+                          },
+                        }}
                       />
                     </Box>
                   </Grid>
@@ -422,6 +474,38 @@ const Orders = () => {
               </Box>
 
               <Divider sx={{ my: 2 }} />
+
+              {/* Payment Information */}
+              <Typography variant="h6" gutterBottom fontWeight={600}>
+                Payment Information
+              </Typography>
+              <Paper sx={{ p: 2, bgcolor: 'background.default', mb: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2" color="text.secondary">Payment Method:</Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {selectedOrder.paymentMethod || 'N/A'}
+                  </Typography>
+                </Box>
+                {selectedOrder.transactionId && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" color="text.secondary">Transaction ID:</Typography>
+                    <Typography variant="body2" fontWeight={600} sx={{ fontSize: '0.85rem' }}>
+                      {selectedOrder.transactionId}
+                    </Typography>
+                  </Box>
+                )}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" color="text.secondary">Payment Status:</Typography>
+                  <Chip
+                    label={selectedOrder.paymentStatus}
+                    size="small"
+                    color={
+                      paymentStatuses.find((p) => p.value === selectedOrder.paymentStatus)
+                        ?.color
+                    }
+                  />
+                </Box>
+              </Paper>
 
               {/* Customer Info */}
               <Typography variant="h6" gutterBottom fontWeight={600}>
@@ -508,7 +592,7 @@ const Orders = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setDetailDialogOpen(false)} variant="outlined">Close</Button>
+          <Button onClick={() => setDetailDialogOpen(false)} variant="outlined" sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}>Close</Button>
           <Button
             variant="contained"
             onClick={() => {
@@ -517,6 +601,8 @@ const Orders = () => {
             }}
             sx={{
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              boxShadow: 'none',
+              '&:hover': { boxShadow: 'none' },
             }}
           >
             Update Status
@@ -563,12 +649,14 @@ const Orders = () => {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setStatusDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setStatusDialogOpen(false)} sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}>Cancel</Button>
           <Button
             onClick={handleUpdateStatus}
             variant="contained"
             sx={{
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              boxShadow: 'none',
+              '&:hover': { boxShadow: 'none' },
             }}
           >
             Update Status
@@ -581,12 +669,24 @@ const Orders = () => {
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
       >
         <Alert
           onClose={() => setSnackbar({ ...snackbar, open: false })}
           severity={snackbar.severity}
-          sx={{ width: '100%' }}
+          variant="filled"
+          sx={{
+            width: '100%',
+            minWidth: 300,
+            bgcolor: snackbar.severity === 'success' ? '#2e7d32' : 
+                     snackbar.severity === 'error' ? '#d32f2f' : 
+                     snackbar.severity === 'warning' ? '#ed6c02' : 
+                     '#0288d1',
+            color: 'white',
+            '& .MuiAlert-icon': {
+              color: 'white',
+            },
+          }}
         >
           {snackbar.message}
         </Alert>

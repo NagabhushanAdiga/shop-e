@@ -30,8 +30,10 @@ import {
   CardContent,
   TablePagination,
   InputAdornment,
+  Drawer,
+  Divider,
 } from '@mui/material';
-import { Add, Edit, Delete, Block, CheckCircle, Search } from '@mui/icons-material';
+import { Add, Edit, Delete, Block, CheckCircle, Search, Visibility, VisibilityOff, Close, Email, Phone, Person, CalendarToday, ShoppingCart, AttachMoney, AdminPanelSettings } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { loadUsers, saveUsers, userRoles, userStatuses } from '../../data/users';
 
@@ -46,6 +48,8 @@ const Users = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [detailsDrawerOpen, setDetailsDrawerOpen] = useState(false);
+  const [viewingUser, setViewingUser] = useState(null);
   
   // Pagination & Search
   const [page, setPage] = useState(0);
@@ -59,7 +63,12 @@ const Users = () => {
     role: 'user',
     status: 'active',
     avatar: '',
+    password: '',
+    confirmPassword: '',
   });
+  
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     setUsers(loadUsers());
@@ -74,6 +83,8 @@ const Users = () => {
         role: user.role,
         status: user.status,
         avatar: user.avatar || '',
+        password: '',
+        confirmPassword: '',
       });
       setSelectedUser(user);
     } else {
@@ -84,9 +95,13 @@ const Users = () => {
         role: 'user',
         status: 'active',
         avatar: '',
+        password: '',
+        confirmPassword: '',
       });
       setSelectedUser(null);
     }
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setDialogOpen(true);
   };
 
@@ -123,13 +138,49 @@ const Users = () => {
       return;
     }
 
+    // Password validation for new users or when password is being changed
+    if (!selectedUser || formData.password) {
+      if (!formData.password) {
+        setSnackbar({
+          open: true,
+          message: 'Password is required for new users',
+          severity: 'error',
+        });
+        return;
+      }
+
+      if (formData.password.length < 6) {
+        setSnackbar({
+          open: true,
+          message: 'Password must be at least 6 characters long',
+          severity: 'error',
+        });
+        return;
+      }
+
+      if (formData.password !== formData.confirmPassword) {
+        setSnackbar({
+          open: true,
+          message: 'Passwords do not match',
+          severity: 'error',
+        });
+        return;
+      }
+    }
+
     let updatedUsers;
 
     if (selectedUser) {
-      // Edit
+      // Edit - only update password if it was changed
+      const updatedData = { ...formData };
+      if (!formData.password) {
+        delete updatedData.password;
+      }
+      delete updatedData.confirmPassword;
+      
       updatedUsers = users.map((user) =>
         user.id === selectedUser.id
-          ? { ...user, ...formData }
+          ? { ...user, ...updatedData }
           : user
       );
       setSnackbar({
@@ -141,7 +192,12 @@ const Users = () => {
       // Add
       const newUser = {
         id: Math.max(...users.map((u) => u.id), 0) + 1,
-        ...formData,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        role: formData.role,
+        status: formData.status,
+        password: formData.password, // In production, this should be hashed
         avatar: formData.avatar || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`,
         createdAt: new Date().toISOString(),
         lastLogin: null,
@@ -151,7 +207,7 @@ const Users = () => {
       updatedUsers = [...users, newUser];
       setSnackbar({
         open: true,
-        message: 'User added successfully!',
+        message: `${formData.role === 'admin' ? 'Admin' : 'User'} added successfully!`,
         severity: 'success',
       });
     }
@@ -182,6 +238,16 @@ const Users = () => {
   const formatDate = (dateString) => {
     if (!dateString) return 'Never';
     return new Date(dateString).toLocaleDateString();
+  };
+
+  const handleOpenDetailsDrawer = (user) => {
+    setViewingUser(user);
+    setDetailsDrawerOpen(true);
+  };
+
+  const handleCloseDetailsDrawer = () => {
+    setDetailsDrawerOpen(false);
+    setTimeout(() => setViewingUser(null), 300);
   };
 
   // Filter and paginate
@@ -222,6 +288,8 @@ const Users = () => {
           onClick={() => handleOpenDialog()}
           sx={{
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            boxShadow: 'none',
+            '&:hover': { boxShadow: 'none' },
           }}
         >
           Add User
@@ -251,58 +319,110 @@ const Users = () => {
       {/* Statistics Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography variant="caption" color="text.secondary">
+          <MotionCard
+            whileHover={{ y: -8, scale: 1.02 }}
+            sx={{
+              height: '100%',
+              minHeight: 120,
+              background: 'linear-gradient(135deg, #667eea15 0%, #667eea30 100%)',
+              borderLeft: '4px solid #667eea',
+              boxShadow: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <Typography variant="caption" color="text.secondary" fontWeight={500}>
                 Total Users
               </Typography>
-              <Typography variant="h4" fontWeight={700}>
+              <Typography variant="h4" fontWeight={700} sx={{ color: '#667eea' }}>
                 {users.length}
               </Typography>
             </CardContent>
-          </Card>
+          </MotionCard>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography variant="caption" color="text.secondary">
+          <MotionCard
+            whileHover={{ y: -8, scale: 1.02 }}
+            sx={{
+              height: '100%',
+              minHeight: 120,
+              background: 'linear-gradient(135deg, #2e7d3215 0%, #2e7d3230 100%)',
+              borderLeft: '4px solid #2e7d32',
+              boxShadow: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <Typography variant="caption" color="text.secondary" fontWeight={500}>
                 Active Users
               </Typography>
               <Typography variant="h4" fontWeight={700} color="success.main">
                 {users.filter((u) => u.status === 'active').length}
               </Typography>
             </CardContent>
-          </Card>
+          </MotionCard>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography variant="caption" color="text.secondary">
+          <MotionCard
+            whileHover={{ y: -8, scale: 1.02 }}
+            sx={{
+              height: '100%',
+              minHeight: 120,
+              background: 'linear-gradient(135deg, #764ba215 0%, #764ba230 100%)',
+              borderLeft: '4px solid #764ba2',
+              boxShadow: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <Typography variant="caption" color="text.secondary" fontWeight={500}>
                 Admins
               </Typography>
-              <Typography variant="h4" fontWeight={700} color="primary">
+              <Typography variant="h4" fontWeight={700} sx={{ color: '#764ba2' }}>
                 {users.filter((u) => u.role === 'admin').length}
               </Typography>
             </CardContent>
-          </Card>
+          </MotionCard>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography variant="caption" color="text.secondary">
+          <MotionCard
+            whileHover={{ y: -8, scale: 1.02 }}
+            sx={{
+              height: '100%',
+              minHeight: 120,
+              background: 'linear-gradient(135deg, #52c41a15 0%, #52c41a30 100%)',
+              borderLeft: '4px solid #52c41a',
+              boxShadow: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <Typography variant="caption" color="text.secondary" fontWeight={500}>
                 Total Revenue
               </Typography>
-              <Typography variant="h4" fontWeight={700} color="success.main">
+              <Typography variant="h4" fontWeight={700} sx={{ color: '#52c41a' }}>
                 ${users.reduce((sum, u) => sum + (u.totalSpent || 0), 0).toFixed(2)}
               </Typography>
             </CardContent>
-          </Card>
+          </MotionCard>
         </Grid>
       </Grid>
 
       {/* Desktop Table View */}
       {!isMobile ? (
-        <Card>
+        <MotionCard
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          sx={{
+            background: 'background.paper',
+            boxShadow: 'none',
+          }}
+        >
           <TableContainer>
             <Table>
               <TableHead>
@@ -348,6 +468,12 @@ const Users = () => {
                         size="small"
                         color={user.status === 'active' ? 'success' : 'default'}
                         icon={user.status === 'active' ? <CheckCircle /> : <Block />}
+                        sx={{
+                          '& .MuiChip-icon': {
+                            marginLeft: '-2px',
+                            marginRight: '6px',
+                          },
+                        }}
                       />
                     </TableCell>
                     <TableCell align="right">
@@ -366,8 +492,17 @@ const Users = () => {
                     <TableCell align="right">
                       <IconButton
                         size="small"
+                        color="info"
+                        onClick={() => handleOpenDetailsDrawer(user)}
+                        title="View Details"
+                      >
+                        <Visibility />
+                      </IconButton>
+                      <IconButton
+                        size="small"
                         color="primary"
                         onClick={() => handleOpenDialog(user)}
+                        title="Edit User"
                       >
                         <Edit />
                       </IconButton>
@@ -376,6 +511,7 @@ const Users = () => {
                         color="error"
                         onClick={() => handleOpenDeleteDialog(user)}
                         disabled={user.role === 'admin' && users.filter(u => u.role === 'admin').length === 1}
+                        title="Delete User"
                       >
                         <Delete />
                       </IconButton>
@@ -394,7 +530,7 @@ const Users = () => {
             onRowsPerPageChange={handleChangeRowsPerPage}
             rowsPerPageOptions={[5, 10, 25, 50]}
           />
-        </Card>
+        </MotionCard>
       ) : (
         /* Mobile Card View */
         <>
@@ -404,7 +540,11 @@ const Users = () => {
               <MotionCard
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                whileHover={{ y: -2 }}
+                whileHover={{ y: -4, scale: 1.01 }}
+                sx={{
+                  background: 'background.paper',
+                  boxShadow: 'none',
+                }}
               >
                 <CardContent>
                   <Box sx={{ display: 'flex', gap: 2 }}>
@@ -438,12 +578,23 @@ const Users = () => {
                           Orders: {user.totalOrders} | Spent: ${user.totalSpent.toFixed(2)}
                         </Typography>
                       </Box>
-                      <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+                      <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="info"
+                          startIcon={<Visibility />}
+                          onClick={() => handleOpenDetailsDrawer(user)}
+                          sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}
+                        >
+                          View
+                        </Button>
                         <Button
                           size="small"
                           variant="outlined"
                           startIcon={<Edit />}
                           onClick={() => handleOpenDialog(user)}
+                          sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}
                         >
                           Edit
                         </Button>
@@ -454,6 +605,7 @@ const Users = () => {
                           startIcon={<Delete />}
                           onClick={() => handleOpenDeleteDialog(user)}
                           disabled={user.role === 'admin' && users.filter(u => u.role === 'admin').length === 1}
+                          sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}
                         >
                           Delete
                         </Button>
@@ -522,6 +674,54 @@ const Users = () => {
                 onChange={handleChange}
               />
             </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label={selectedUser ? "New Password (leave empty to keep current)" : "Password"}
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                value={formData.password}
+                onChange={handleChange}
+                required={!selectedUser}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                helperText={!selectedUser ? "Minimum 6 characters" : "Leave empty to keep current password"}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Confirm Password"
+                name="confirmPassword"
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required={!selectedUser || !!formData.password}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        edge="end"
+                      >
+                        {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                helperText="Re-enter password to confirm"
+              />
+            </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
                 <InputLabel>Role</InputLabel>
@@ -569,12 +769,14 @@ const Users = () => {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleCloseDialog} sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}>Cancel</Button>
           <Button
             onClick={handleSave}
             variant="contained"
             sx={{
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              boxShadow: 'none',
+              '&:hover': { boxShadow: 'none' },
             }}
           >
             {selectedUser ? 'Update' : 'Add'} User
@@ -597,24 +799,372 @@ const Users = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleDelete} color="error" variant="contained">
+          <Button onClick={() => setDeleteDialogOpen(false)} sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}>Cancel</Button>
+          <Button onClick={handleDelete} color="error" variant="contained" sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}>
             Delete
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* User Details Drawer */}
+      <Drawer
+        anchor="right"
+        open={detailsDrawerOpen}
+        onClose={handleCloseDetailsDrawer}
+        sx={{
+          '& .MuiDrawer-paper': {
+            width: isMobile ? '100%' : 450,
+            maxWidth: '100%',
+          },
+        }}
+      >
+        {viewingUser && (
+          <Box>
+            {/* Header */}
+            <Box
+              sx={{
+                p: 3,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <Typography variant="h5" fontWeight={600}>
+                User Details
+              </Typography>
+              <IconButton
+                onClick={handleCloseDetailsDrawer}
+                sx={{ color: 'white' }}
+              >
+                <Close />
+              </IconButton>
+            </Box>
+
+            {/* User Avatar & Name */}
+            <Box
+              sx={{
+                p: 3,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                borderBottom: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <Avatar
+                src={viewingUser.avatar}
+                sx={{
+                  width: 120,
+                  height: 120,
+                  mb: 2,
+                  border: '4px solid',
+                  borderColor: 'primary.main',
+                }}
+              >
+                {viewingUser.name.charAt(0)}
+              </Avatar>
+              <Typography variant="h5" fontWeight={600} gutterBottom>
+                {viewingUser.name}
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                <Chip
+                  label={viewingUser.role}
+                  size="medium"
+                  color={viewingUser.role === 'admin' ? 'primary' : 'default'}
+                  icon={viewingUser.role === 'admin' ? <AdminPanelSettings /> : <Person />}
+                  sx={{
+                    '& .MuiChip-icon': {
+                      marginLeft: '-2px',
+                      marginRight: '6px',
+                    },
+                  }}
+                />
+                <Chip
+                  label={viewingUser.status}
+                  size="medium"
+                  color={viewingUser.status === 'active' ? 'success' : 'default'}
+                  icon={viewingUser.status === 'active' ? <CheckCircle /> : <Block />}
+                  sx={{
+                    '& .MuiChip-icon': {
+                      marginLeft: '-2px',
+                      marginRight: '6px',
+                    },
+                  }}
+                />
+              </Box>
+            </Box>
+
+            {/* User Information */}
+            <Box sx={{ p: 3 }}>
+              <Typography variant="h6" fontWeight={600} gutterBottom>
+                Contact Information
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                {/* Email */}
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: 'primary.light',
+                      color: 'primary.main',
+                    }}
+                  >
+                    <Email />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Email Address
+                    </Typography>
+                    <Typography variant="body1" fontWeight={500}>
+                      {viewingUser.email}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Phone */}
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: 'success.light',
+                      color: 'success.main',
+                    }}
+                  >
+                    <Phone />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Phone Number
+                    </Typography>
+                    <Typography variant="body1" fontWeight={500}>
+                      {viewingUser.phone || 'Not provided'}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+
+              <Typography variant="h6" fontWeight={600} gutterBottom sx={{ mt: 4 }}>
+                Account Information
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                {/* Created At */}
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: 'info.light',
+                      color: 'info.main',
+                    }}
+                  >
+                    <CalendarToday />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Member Since
+                    </Typography>
+                    <Typography variant="body1" fontWeight={500}>
+                      {formatDate(viewingUser.createdAt)}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Last Login */}
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: 'warning.light',
+                      color: 'warning.main',
+                    }}
+                  >
+                    <CalendarToday />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Last Login
+                    </Typography>
+                    <Typography variant="body1" fontWeight={500}>
+                      {formatDate(viewingUser.lastLogin)}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+
+              <Typography variant="h6" fontWeight={600} gutterBottom sx={{ mt: 4 }}>
+                Purchase History
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                {/* Total Orders */}
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: 'secondary.light',
+                      color: 'secondary.main',
+                    }}
+                  >
+                    <ShoppingCart />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Total Orders
+                    </Typography>
+                    <Typography variant="h5" fontWeight={600} color="secondary.main">
+                      {viewingUser.totalOrders}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Total Spent */}
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: 'success.light',
+                      color: 'success.main',
+                    }}
+                  >
+                    <AttachMoney />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Total Spent
+                    </Typography>
+                    <Typography variant="h5" fontWeight={600} color="success.main">
+                      ${viewingUser.totalSpent.toFixed(2)}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Average Order Value */}
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: 'primary.light',
+                      color: 'primary.main',
+                    }}
+                  >
+                    <AttachMoney />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Average Order Value
+                    </Typography>
+                    <Typography variant="h6" fontWeight={600}>
+                      ${viewingUser.totalOrders > 0 
+                        ? (viewingUser.totalSpent / viewingUser.totalOrders).toFixed(2)
+                        : '0.00'
+                      }
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* Action Buttons */}
+              <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  startIcon={<Edit />}
+                  onClick={() => {
+                    handleCloseDetailsDrawer();
+                    handleOpenDialog(viewingUser);
+                  }}
+                  sx={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    boxShadow: 'none',
+                    '&:hover': { boxShadow: 'none' },
+                  }}
+                >
+                  Edit User
+                </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  color="error"
+                  startIcon={<Delete />}
+                  onClick={() => {
+                    handleCloseDetailsDrawer();
+                    handleOpenDeleteDialog(viewingUser);
+                  }}
+                  disabled={viewingUser.role === 'admin' && users.filter(u => u.role === 'admin').length === 1}
+                  sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}
+                >
+                  Delete
+                </Button>
+              </Box>
+            </Box>
+          </Box>
+        )}
+      </Drawer>
 
       {/* Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
       >
         <Alert
           onClose={() => setSnackbar({ ...snackbar, open: false })}
           severity={snackbar.severity}
-          sx={{ width: '100%' }}
+          variant="filled"
+          sx={{
+            width: '100%',
+            minWidth: 300,
+            bgcolor: snackbar.severity === 'success' ? '#2e7d32' : 
+                     snackbar.severity === 'error' ? '#d32f2f' : 
+                     snackbar.severity === 'warning' ? '#ed6c02' : 
+                     '#0288d1',
+            color: 'white',
+            '& .MuiAlert-icon': {
+              color: 'white',
+            },
+          }}
         >
           {snackbar.message}
         </Alert>

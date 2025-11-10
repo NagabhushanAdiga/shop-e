@@ -3,6 +3,7 @@ export const initialOrders = [
   {
     id: 1,
     orderNumber: 'ORD-2024-001',
+    userId: 2,
     customer: {
       name: 'John Doe',
       email: 'john.doe@example.com',
@@ -17,7 +18,9 @@ export const initialOrders = [
     tax: 16.00,
     total: 221.96,
     status: 'pending',
+    paymentMethod: 'UPI',
     paymentStatus: 'paid',
+    transactionId: 'UPI-1731067800123',
     shippingAddress: {
       street: '123 Main St',
       city: 'New York',
@@ -31,6 +34,7 @@ export const initialOrders = [
   {
     id: 2,
     orderNumber: 'ORD-2024-002',
+    userId: 3,
     customer: {
       name: 'Jane Smith',
       email: 'jane.smith@example.com',
@@ -44,7 +48,9 @@ export const initialOrders = [
     tax: 16.00,
     total: 215.99,
     status: 'processing',
+    paymentMethod: 'PhonePe',
     paymentStatus: 'paid',
+    transactionId: 'PP-1731067900456',
     shippingAddress: {
       street: '456 Oak Ave',
       city: 'Los Angeles',
@@ -72,7 +78,9 @@ export const initialOrders = [
     tax: 9.60,
     total: 129.58,
     status: 'shipped',
+    paymentMethod: 'Google Pay',
     paymentStatus: 'paid',
+    transactionId: 'GP-1731068000789',
     shippingAddress: {
       street: '789 Pine Rd',
       city: 'Chicago',
@@ -99,7 +107,9 @@ export const initialOrders = [
     tax: 10.40,
     total: 140.39,
     status: 'delivered',
+    paymentMethod: 'Card',
     paymentStatus: 'paid',
+    transactionId: 'CARD-1731068100234',
     shippingAddress: {
       street: '321 Elm St',
       city: 'Houston',
@@ -126,7 +136,9 @@ export const initialOrders = [
     tax: 11.20,
     total: 151.18,
     status: 'cancelled',
+    paymentMethod: 'UPI',
     paymentStatus: 'refunded',
+    transactionId: 'UPI-1731068300890',
     shippingAddress: {
       street: '555 Maple Dr',
       city: 'Phoenix',

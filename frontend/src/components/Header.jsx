@@ -30,7 +30,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useThemeSettings } from '../context/ThemeContext';
 import CartDialog from './CartDialog';
+import AuthDialog from './AuthDialog';
 
 const MotionIconButton = motion(IconButton);
 
@@ -40,9 +42,11 @@ const Header = () => {
   const navigate = useNavigate();
   const { getCartCount, setCartOpen } = useCart();
   const { user, logout, isAdmin } = useAuth();
+  const { themeSettings } = useThemeSettings();
   
   const [anchorEl, setAnchorEl] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
   const handleUserMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -61,7 +65,6 @@ const Header = () => {
   const menuItems = [
     { text: 'Home', path: '/' },
     { text: 'Products', path: '/products' },
-    { text: 'Track Order', path: '/track-order' },
   ];
 
   return (
@@ -69,7 +72,7 @@ const Header = () => {
       <AppBar
         position="sticky"
         sx={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: `linear-gradient(135deg, ${themeSettings.headerGradientStart} 0%, ${themeSettings.headerGradientEnd} 100%)`,
           boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
         }}
       >
@@ -144,7 +147,7 @@ const Header = () => {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 color="inherit"
-                onClick={user ? handleUserMenuOpen : () => navigate('/login')}
+                onClick={user ? handleUserMenuOpen : () => setAuthDialogOpen(true)}
               >
                 {isAdmin ? <AdminPanelSettings /> : <Person />}
               </MotionIconButton>
@@ -174,6 +177,10 @@ const Header = () => {
                     Admin Panel
                   </MenuItem>
                 )}
+                <MenuItem onClick={() => { handleUserMenuClose(); navigate('/profile'); }}>
+                  <Person sx={{ mr: 1, fontSize: 20 }} />
+                  My Profile
+                </MenuItem>
                 <MenuItem onClick={handleLogout}>Logout</MenuItem>
               </Menu>
 
@@ -216,6 +223,9 @@ const Header = () => {
 
       {/* Cart Dialog */}
       <CartDialog />
+
+      {/* Auth Dialog */}
+      <AuthDialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} />
     </>
   );
 };

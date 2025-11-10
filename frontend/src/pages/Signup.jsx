@@ -26,7 +26,7 @@ const Signup = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
-  const { signup, user } = useAuth();
+  const { signup, user, isAdmin } = useAuth();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -42,9 +42,13 @@ const Signup = () => {
   // Redirect if already logged in
   React.useEffect(() => {
     if (user) {
-      navigate('/');
+      if (isAdmin) {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/');
+      }
     }
-  }, [user, navigate]);
+  }, [user, isAdmin, navigate]);
 
   const handleChange = (e) => {
     setFormData({
@@ -89,8 +93,13 @@ const Signup = () => {
     setLoading(true);
 
     try {
-      await signup(formData.name, formData.email, formData.password);
-      navigate('/');
+      const userData = await signup(formData.name, formData.email, formData.password);
+      // Redirect based on role (though signup always creates regular users)
+      if (userData.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       setError('Failed to create account. Please try again.');
     } finally {
@@ -219,26 +228,6 @@ const Signup = () => {
                 {loading ? 'Creating Account...' : 'Sign Up'}
               </Button>
             </form>
-
-            <Divider sx={{ my: 3 }}>OR</Divider>
-
-            {/* Social Signup Buttons */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Button
-                fullWidth
-                variant="outlined"
-                sx={{ py: 1.5 }}
-              >
-                Sign up with Google
-              </Button>
-              <Button
-                fullWidth
-                variant="outlined"
-                sx={{ py: 1.5 }}
-              >
-                Sign up with Facebook
-              </Button>
-            </Box>
 
             {/* Login Link */}
             <Box sx={{ textAlign: 'center', mt: 3 }}>

@@ -43,6 +43,8 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const products = loadProducts();
@@ -76,6 +78,16 @@ const ProductDetail = () => {
   // For demo, using the same image (in real app, products would have multiple images)
   const productImages = [product.image, product.image, product.image];
 
+  const handleMouseMove = (e) => {
+    if (!isZoomed) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    
+    setMousePosition({ x, y });
+  };
+
   return (
     <Box sx={{ minHeight: '80vh', bgcolor: 'background.default', py: 4 }}>
       <Container maxWidth="lg">
@@ -96,7 +108,17 @@ const ProductDetail = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <Card sx={{ mb: 2 }}>
+              <Card
+                sx={{
+                  mb: 2,
+                  overflow: 'hidden',
+                  position: 'relative',
+                  cursor: isZoomed ? 'zoom-out' : 'zoom-in',
+                }}
+                onMouseEnter={() => setIsZoomed(true)}
+                onMouseLeave={() => setIsZoomed(false)}
+                onMouseMove={handleMouseMove}
+              >
                 <Box
                   component="img"
                   src={productImages[selectedImage]}
@@ -105,8 +127,29 @@ const ProductDetail = () => {
                     width: '100%',
                     height: { xs: 300, md: 450 },
                     objectFit: 'cover',
+                    transform: isZoomed ? 'scale(2)' : 'scale(1)',
+                    transformOrigin: `${mousePosition.x}% ${mousePosition.y}%`,
+                    transition: 'transform 0.3s ease-out',
                   }}
                 />
+                {!isMobile && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 10,
+                      right: 10,
+                      bgcolor: 'rgba(0,0,0,0.6)',
+                      color: 'white',
+                      px: 2,
+                      py: 0.5,
+                      borderRadius: 2,
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {isZoomed ? '🔍 Zoom In' : '🔍 Hover to Zoom'}
+                  </Box>
+                )}
               </Card>
 
               {/* Thumbnail Images */}

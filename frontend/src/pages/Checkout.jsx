@@ -17,14 +17,19 @@ import {
   MenuItem,
   useMediaQuery,
   useTheme,
+  Stepper,
+  Step,
+  StepLabel,
+  Alert,
 } from '@mui/material';
-import { CheckCircle, CreditCard } from '@mui/icons-material';
+import { CheckCircle, CreditCard, LocalShipping, Payment } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import { loadOrders, saveOrders } from '../data/orders';
+import PaymentMethods from '../components/PaymentMethods';
 
 const MotionCard = motion(Card);
 
@@ -45,14 +50,15 @@ const Checkout = () => {
     city: '',
     state: '',
     zipCode: '',
-    cardNumber: '',
-    cardName: '',
-    expiryDate: '',
-    cvv: '',
   });
 
   const [errors, setErrors] = useState({});
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [activeStep, setActiveStep] = useState(0);
+  const [paymentError, setPaymentError] = useState('');
+  const [paymentInfo, setPaymentInfo] = useState(null);
+
+  const steps = ['Shipping Information', 'Payment Method', 'Order Confirmation'];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -69,7 +75,7 @@ const Checkout = () => {
     }
   };
 
-  const validateForm = () => {
+  const validateShippingInfo = () => {
     const newErrors = {};
 
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
@@ -84,85 +90,84 @@ const Checkout = () => {
     if (!formData.city.trim()) newErrors.city = 'City is required';
     if (!formData.state) newErrors.state = 'State is required';
     if (!formData.zipCode.trim()) newErrors.zipCode = 'ZIP code is required';
-    if (!formData.cardNumber.trim()) {
-      newErrors.cardNumber = 'Card number is required';
-    } else if (formData.cardNumber.replace(/\s/g, '').length !== 16) {
-      newErrors.cardNumber = 'Card number must be 16 digits';
-    }
-    if (!formData.cardName.trim()) newErrors.cardName = 'Cardholder name is required';
-    if (!formData.expiryDate.trim()) {
-      newErrors.expiryDate = 'Expiry date is required';
-    } else if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(formData.expiryDate)) {
-      newErrors.expiryDate = 'Format: MM/YY';
-    }
-    if (!formData.cvv.trim()) {
-      newErrors.cvv = 'CVV is required';
-    } else if (formData.cvv.length !== 3) {
-      newErrors.cvv = 'CVV must be 3 digits';
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (validateForm()) {
-      // Simulate order processing
-      setTimeout(() => {
-        // Create order
-        const orders = loadOrders();
-        const newOrder = {
-          id: Math.max(...orders.map(o => o.id), 0) + 1,
-          orderNumber: `ORD-${new Date().getFullYear()}-${String(orders.length + 1).padStart(3, '0')}`,
-          customer: {
-            name: `${formData.firstName} ${formData.lastName}`,
-            email: formData.email,
-            phone: formData.phone,
-          },
-          items: cartItems.map(item => ({
-            productId: item.id,
-            name: item.name,
-            quantity: item.quantity,
-            price: item.price,
-          })),
-          subtotal: subtotal,
-          shipping: shipping,
-          tax: tax,
-          total: total,
-          status: 'pending',
-          paymentStatus: 'paid',
-          shippingAddress: {
-            street: formData.address,
-            city: formData.city,
-            state: formData.state,
-            zipCode: formData.zipCode,
-            country: 'USA',
-          },
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        
-        // Save order
-        const updatedOrders = [...orders, newOrder];
-        saveOrders(updatedOrders);
-        
-        // Send notification to admin
-        addNotification({
-          type: 'order',
-          title: 'New Order Received!',
-          message: `Order ${newOrder.orderNumber} from ${newOrder.customer.name} - $${total.toFixed(2)}`,
-          link: '/admin/orders',
-        });
-        
-        // Save order number for tracking
-        localStorage.setItem('lastOrderNumber', newOrder.orderNumber);
-        
-        setSuccessDialogOpen(true);
-        clearCart();
-      }, 1000);
+  const handleNext = () => {
+    if (activeStep === 0 && validateShippingInfo()) {
+      setActiveStep((prev) => prev + 1);
     }
+  };
+
+  const handleBack = () => {
+    setActiveStep((prev) => prev - 1);
+    setPaymentError('');
+  };
+
+  const handlePaymentSuccess = (paymentData) => {
+    setPaymentInfo(paymentData);
+    
+    // Create order
+    const orders = loadOrders();
+    const newOrder = {
+      id: Math.max(...orders.map(o => o.id), 0) + 1,
+      orderNumber: `ORD-${new Date().getFullYear()}-${String(orders.length + 1).padStart(3, '0')}`,
+      userId: user?.id || null,
+      customer: {
+        name: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email,
+        phone: formData.phone,
+      },
+      items: cartItems.map(item => ({
+        productId: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        image: item.image,
+      })),
+      subtotal: subtotal,
+      shipping: shipping,
+      tax: tax,
+      total: total,
+      status: 'pending',
+      paymentMethod: paymentData.method,
+      paymentStatus: paymentData.method === 'Cash on Delivery' ? 'pending' : 'paid',
+      transactionId: paymentData.transactionId,
+      shippingAddress: {
+        street: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        country: 'India',
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    
+    // Save order
+    const updatedOrders = [...orders, newOrder];
+    saveOrders(updatedOrders);
+    
+    // Send notification to admin
+    addNotification({
+      type: 'order',
+      title: 'New Order Received!',
+      message: `Order ${newOrder.orderNumber} from ${newOrder.customer.name} - ₹${total.toFixed(2)}`,
+      link: '/admin/orders',
+    });
+    
+    // Save order number for tracking
+    localStorage.setItem('lastOrderNumber', newOrder.orderNumber);
+    
+    setActiveStep(2);
+    setSuccessDialogOpen(true);
+    clearCart();
+  };
+
+  const handlePaymentError = (error) => {
+    setPaymentError(error);
   };
 
   const handleSuccessClose = () => {
@@ -191,25 +196,40 @@ const Checkout = () => {
   return (
     <Box sx={{ minHeight: '80vh', bgcolor: 'background.default', py: 4 }}>
       <Container maxWidth="lg">
-        <Typography variant={isMobile ? 'h4' : 'h3'} gutterBottom fontWeight={600} sx={{ mb: 4 }}>
+        <Typography variant={isMobile ? 'h4' : 'h3'} gutterBottom fontWeight={600} sx={{ mb: 2 }}>
           Checkout
         </Typography>
 
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={3}>
-            {/* Checkout Form */}
-            <Grid item xs={12} md={8}>
-              {/* Contact Information */}
-              <MotionCard
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                sx={{ mb: 3 }}
-              >
-                <CardContent>
-                  <Typography variant="h6" gutterBottom fontWeight={600}>
-                    Contact Information
-                  </Typography>
+        {/* Stepper */}
+        <Box sx={{ mb: 4 }}>
+          <Stepper activeStep={activeStep} alternativeLabel>
+            {steps.map((label) => (
+              <Step key={label}>
+                <StepLabel>{label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+        </Box>
+
+        <Grid container spacing={3}>
+          {/* Checkout Form */}
+          <Grid item xs={12} md={8}>
+            {activeStep === 0 && (
+              <>
+                {/* Contact Information */}
+                <MotionCard
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  sx={{ mb: 3 }}
+                >
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                      <LocalShipping color="primary" />
+                      <Typography variant="h6" fontWeight={600}>
+                        Contact Information
+                      </Typography>
+                    </Box>
                   <Grid container spacing={2} sx={{ mt: 1 }}>
                     <Grid item xs={12} sm={6}>
                       <TextField
@@ -260,17 +280,20 @@ const Checkout = () => {
                 </CardContent>
               </MotionCard>
 
-              {/* Shipping Address */}
-              <MotionCard
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-                sx={{ mb: 3 }}
-              >
-                <CardContent>
-                  <Typography variant="h6" gutterBottom fontWeight={600}>
-                    Shipping Address
-                  </Typography>
+                {/* Shipping Address */}
+                <MotionCard
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.1 }}
+                  sx={{ mb: 3 }}
+                >
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                      <LocalShipping color="primary" />
+                      <Typography variant="h6" fontWeight={600}>
+                        Shipping Address
+                      </Typography>
+                    </Box>
                   <Grid container spacing={2} sx={{ mt: 1 }}>
                     <Grid item xs={12}>
                       <TextField
@@ -326,71 +349,110 @@ const Checkout = () => {
                 </CardContent>
               </MotionCard>
 
-              {/* Payment Information */}
+                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    onClick={handleNext}
+                    sx={{
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      boxShadow: 'none',
+                      '&:hover': { boxShadow: 'none' },
+                    }}
+                  >
+                    Continue to Payment
+                  </Button>
+                </Box>
+              </>
+            )}
+
+            {/* Step 2: Payment Method */}
+            {activeStep === 1 && (
               <MotionCard
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
+                transition={{ duration: 0.3 }}
               >
                 <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <CreditCard sx={{ mr: 1 }} />
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+                    <Payment color="primary" />
                     <Typography variant="h6" fontWeight={600}>
-                      Payment Information
+                      Payment Method
                     </Typography>
                   </Box>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        label="Card Number"
-                        name="cardNumber"
-                        value={formData.cardNumber}
-                        onChange={handleChange}
-                        error={!!errors.cardNumber}
-                        helperText={errors.cardNumber}
-                        placeholder="1234 5678 9012 3456"
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        label="Cardholder Name"
-                        name="cardName"
-                        value={formData.cardName}
-                        onChange={handleChange}
-                        error={!!errors.cardName}
-                        helperText={errors.cardName}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Expiry Date"
-                        name="expiryDate"
-                        value={formData.expiryDate}
-                        onChange={handleChange}
-                        error={!!errors.expiryDate}
-                        helperText={errors.expiryDate}
-                        placeholder="MM/YY"
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="CVV"
-                        name="cvv"
-                        value={formData.cvv}
-                        onChange={handleChange}
-                        error={!!errors.cvv}
-                        helperText={errors.cvv}
-                        placeholder="123"
-                      />
-                    </Grid>
-                  </Grid>
+
+                  {paymentError && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                      {paymentError}
+                    </Alert>
+                  )}
+
+                  <PaymentMethods
+                    orderDetails={{
+                      total: total,
+                      orderId: `TEMP-${Date.now()}`,
+                      customerName: `${formData.firstName} ${formData.lastName}`,
+                      customerEmail: formData.email,
+                      phone: formData.phone,
+                    }}
+                    onPaymentSuccess={handlePaymentSuccess}
+                    onPaymentError={handlePaymentError}
+                  />
+
+                  <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
+                    <Button
+                      variant="outlined"
+                      onClick={handleBack}
+                      sx={{ boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}
+                    >
+                      Back
+                    </Button>
+                  </Box>
                 </CardContent>
               </MotionCard>
-            </Grid>
+            )}
+
+            {/* Step 3: Order Confirmation */}
+            {activeStep === 2 && (
+              <MotionCard
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <CardContent sx={{ textAlign: 'center', py: 6 }}>
+                  <CheckCircle sx={{ fontSize: 80, color: 'success.main', mb: 2 }} />
+                  <Typography variant="h4" fontWeight={600} gutterBottom>
+                    Order Placed Successfully!
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                    Thank you for your purchase. Your order has been confirmed.
+                  </Typography>
+                  {paymentInfo && (
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Payment Method: <strong>{paymentInfo.method}</strong>
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Transaction ID: <strong>{paymentInfo.transactionId}</strong>
+                      </Typography>
+                    </Box>
+                  )}
+                  <Button
+                    variant="contained"
+                    size="large"
+                    onClick={() => navigate('/')}
+                    sx={{
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      boxShadow: 'none',
+                      '&:hover': { boxShadow: 'none' },
+                    }}
+                  >
+                    Continue Shopping
+                  </Button>
+                </CardContent>
+              </MotionCard>
+            )}
+          </Grid>
 
             {/* Order Summary */}
             <Grid item xs={12} md={4}>
@@ -422,7 +484,7 @@ const Checkout = () => {
                           {item.name} × {item.quantity}
                         </Typography>
                         <Typography variant="body2" fontWeight={600}>
-                          ${(item.price * item.quantity).toFixed(2)}
+                          ₹{(item.price * item.quantity).toFixed(2)}
                         </Typography>
                       </Box>
                     ))}
@@ -435,19 +497,19 @@ const Checkout = () => {
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                       <Typography variant="body2">Subtotal:</Typography>
                       <Typography variant="body2" fontWeight={600}>
-                        ${subtotal.toFixed(2)}
+                        ₹{subtotal.toFixed(2)}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                       <Typography variant="body2">Shipping:</Typography>
                       <Typography variant="body2" fontWeight={600}>
-                        {shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}
+                        {shipping === 0 ? 'FREE' : `₹${shipping.toFixed(2)}`}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                       <Typography variant="body2">Tax:</Typography>
                       <Typography variant="body2" fontWeight={600}>
-                        ${tax.toFixed(2)}
+                        ₹{tax.toFixed(2)}
                       </Typography>
                     </Box>
 
@@ -462,60 +524,10 @@ const Checkout = () => {
                       </Typography>
                     </Box>
                   </Box>
-
-                  <Button
-                    fullWidth
-                    type="submit"
-                    variant="contained"
-                    size="large"
-                    sx={{
-                      mt: 3,
-                      py: 1.5,
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    }}
-                  >
-                    Place Order
-                  </Button>
                 </CardContent>
               </Card>
             </Grid>
           </Grid>
-        </form>
-
-        {/* Success Dialog */}
-        <Dialog
-          open={successDialogOpen}
-          onClose={handleSuccessClose}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogContent sx={{ textAlign: 'center', py: 6 }}>
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.5, type: 'spring' }}
-            >
-              <CheckCircle sx={{ fontSize: 100, color: 'success.main', mb: 3 }} />
-            </motion.div>
-            <Typography variant="h4" gutterBottom fontWeight={600}>
-              Order Placed Successfully!
-            </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-              Thank you for your purchase. Your order confirmation has been sent to{' '}
-              {formData.email}
-            </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={handleSuccessClose}
-              sx={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              }}
-            >
-              Continue Shopping
-            </Button>
-          </DialogContent>
-        </Dialog>
       </Container>
     </Box>
   );
