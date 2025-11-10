@@ -371,7 +371,7 @@ const Home = () => {
           boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
         }}
       >
-        <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Container maxWidth={false} sx={{ py: 4, px: { xs: 2, sm: 3, md: 4 }, maxWidth: '100%' }}>
           <Grid container spacing={3}>
             {[
               { icon: <LocalShipping />, title: 'Free Shipping', desc: 'On orders over $50', color: '#667eea' },

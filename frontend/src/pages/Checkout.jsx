@@ -194,8 +194,8 @@ const Checkout = () => {
   ];
 
   return (
-    <Box sx={{ minHeight: '80vh', bgcolor: 'background.default', py: 4 }}>
-      <Container maxWidth="lg">
+    <Box sx={{ minHeight: '80vh', bgcolor: 'background.default', py: 3, px: { xs: 2, sm: 3, md: 4 } }}>
+      <Container maxWidth={false} sx={{ maxWidth: '100%', px: { xs: 1, sm: 2, md: 3 } }}>
         <Typography variant={isMobile ? 'h4' : 'h3'} gutterBottom fontWeight={600} sx={{ mb: 2 }}>
           Checkout
         </Typography>

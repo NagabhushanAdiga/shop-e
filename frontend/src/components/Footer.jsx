@@ -39,7 +39,7 @@ const Footer = () => {
         py: { xs: 4, md: 6 },
       }}
     >
-      <Container maxWidth="lg">
+      <Container maxWidth={false} sx={{ maxWidth: '100%', px: { xs: 2, sm: 3, md: 4 } }}>
         <Grid container spacing={{ xs: 3, md: 4 }}>
           {/* About Section */}
           <Grid item xs={12} sm={6} md={3}>

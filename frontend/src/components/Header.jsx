@@ -76,7 +76,7 @@ const Header = () => {
           boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
         }}
       >
-        <Container maxWidth="xl">
+        <Container maxWidth={false} sx={{ maxWidth: '100%', px: { xs: 2, sm: 3, md: 4 } }}>
           <Toolbar sx={{ justifyContent: 'space-between', py: 1 }}>
             {/* Logo */}
             <Box
