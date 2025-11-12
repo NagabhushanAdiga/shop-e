@@ -44,6 +44,7 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { loadProducts } from '../data/products';
+import { formatCurrency } from '../utils/currency';
 
 const MotionBox = motion(Box);
 const MotionCard = motion(Card);
@@ -747,7 +748,7 @@ const Home = () => {
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 1 }}>
                       <Typography variant="h5" color="primary" fontWeight={800}>
-                        ${product.price.toFixed(2)}
+                        {formatCurrency(product.price)}
                       </Typography>
                       <Typography
                         variant="body2"
@@ -756,7 +757,7 @@ const Home = () => {
                           color: 'text.secondary',
                         }}
                       >
-                        ${(product.price * 1.2).toFixed(2)}
+                        {formatCurrency(product.price * 1.2)}
                       </Typography>
                     </Box>
                     <Chip
@@ -879,7 +880,7 @@ const Home = () => {
                       {product.name}
                     </Typography>
                     <Typography variant="h6" color="primary" fontWeight={700} sx={{ mt: 1 }}>
-                      ${product.price.toFixed(2)}
+                      {formatCurrency(product.price)}
                     </Typography>
                   </CardContent>
                 </MotionCard>

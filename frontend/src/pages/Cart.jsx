@@ -16,13 +16,17 @@ import {
   DialogActions,
   useMediaQuery,
   useTheme,
+  Alert,
 } from '@mui/material';
 import { Add, Remove, Delete, ShoppingCart, ArrowForward } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { formatCurrency } from '../utils/currency';
 
 const MotionCard = motion(Card);
+
+const MAX_QUANTITY_PER_PRODUCT = 5;
 
 const Cart = () => {
   const theme = useTheme();
@@ -128,7 +132,7 @@ const Cart = () => {
                           {item.category}
                         </Typography>
                         <Typography variant="h6" color="primary" sx={{ mt: 1 }}>
-                          ${item.price.toFixed(2)}
+                          {formatCurrency(item.price)}
                         </Typography>
                       </Box>
 
@@ -152,6 +156,7 @@ const Cart = () => {
                           <IconButton
                             size="small"
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            disabled={item.quantity <= 1}
                           >
                             <Remove />
                           </IconButton>
@@ -161,14 +166,20 @@ const Cart = () => {
                           <IconButton
                             size="small"
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            disabled={item.quantity >= MAX_QUANTITY_PER_PRODUCT}
                           >
                             <Add />
                           </IconButton>
                         </Box>
+                        {item.quantity >= MAX_QUANTITY_PER_PRODUCT && (
+                          <Typography variant="caption" color="warning.main" sx={{ ml: 1 }}>
+                            Max limit reached
+                          </Typography>
+                        )}
 
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                           <Typography variant="h6" fontWeight={700}>
-                            ${(item.price * item.quantity).toFixed(2)}
+                            {formatCurrency(item.price * item.quantity)}
                           </Typography>
                           <IconButton
                             color="error"
@@ -204,21 +215,21 @@ const Cart = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body1">Subtotal:</Typography>
                   <Typography variant="body1" fontWeight={600}>
-                    ${getCartTotal().toFixed(2)}
+                    {formatCurrency(getCartTotal())}
                   </Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body1">Shipping:</Typography>
                   <Typography variant="body1" fontWeight={600}>
-                    {getCartTotal() > 50 ? 'FREE' : '$5.99'}
+                    {getCartTotal() > 4000 ? 'FREE' : formatCurrency(99)}
                   </Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body1">Tax:</Typography>
+                  <Typography variant="body1">Tax (GST 18%):</Typography>
                   <Typography variant="body1" fontWeight={600}>
-                    ${(getCartTotal() * 0.08).toFixed(2)}
+                    {formatCurrency(getCartTotal() * 0.18)}
                   </Typography>
                 </Box>
 
@@ -229,24 +240,28 @@ const Cart = () => {
                     Total:
                   </Typography>
                   <Typography variant="h6" color="primary" fontWeight={700}>
-                    ${(
+                    {formatCurrency(
                       getCartTotal() +
-                      (getCartTotal() > 50 ? 0 : 5.99) +
-                      getCartTotal() * 0.08
-                    ).toFixed(2)}
+                      (getCartTotal() > 4000 ? 0 : 99) +
+                      getCartTotal() * 0.18
+                    )}
                   </Typography>
                 </Box>
               </Box>
 
-              {getCartTotal() < 50 && (
+              {getCartTotal() < 4000 && (
                 <Typography
                   variant="caption"
                   color="text.secondary"
                   sx={{ display: 'block', mt: 2, textAlign: 'center' }}
                 >
-                  Add ${(50 - getCartTotal()).toFixed(2)} more for FREE shipping!
+                  Add {formatCurrency(4000 - getCartTotal())} more for FREE shipping!
                 </Typography>
               )}
+
+              <Alert severity="warning" icon={false} sx={{ mt: 3, fontWeight: 600, textAlign: 'center' }}>
+                ⚠️ NO RETURN | NO REFUND | NO EXCHANGE
+              </Alert>
 
               <Button
                 fullWidth

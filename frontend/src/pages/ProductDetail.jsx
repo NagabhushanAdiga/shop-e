@@ -18,6 +18,7 @@ import {
   DialogActions,
   useMediaQuery,
   useTheme,
+  Alert,
 } from '@mui/material';
 import {
   Add,
@@ -29,8 +30,11 @@ import {
 import { motion } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import { loadProducts } from '../data/products';
+import { formatCurrency } from '../utils/currency';
 
 const MotionBox = motion(Box);
+
+const MAX_QUANTITY_PER_PRODUCT = 5;
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -70,7 +74,8 @@ const ProductDetail = () => {
 
   const handleQuantityChange = (delta) => {
     const newQuantity = quantity + delta;
-    if (newQuantity >= 1 && newQuantity <= product.stock) {
+    const maxAllowed = Math.min(product.stock, MAX_QUANTITY_PER_PRODUCT);
+    if (newQuantity >= 1 && newQuantity <= maxAllowed) {
       setQuantity(newQuantity);
     }
   };
@@ -204,7 +209,7 @@ const ProductDetail = () => {
               </Box>
 
               <Typography variant="h4" color="primary" fontWeight={700} sx={{ mb: 3 }}>
-                ${product.price.toFixed(2)}
+                {formatCurrency(product.price)}
               </Typography>
 
               <Divider sx={{ my: 3 }} />
@@ -225,6 +230,10 @@ const ProductDetail = () => {
                   </Typography>
                 </Typography>
               </Box>
+
+              <Alert severity="warning" icon={false} sx={{ mb: 3, fontWeight: 600 }}>
+                ⚠️ NO RETURN | NO REFUND | NO EXCHANGE
+              </Alert>
 
               <Divider sx={{ my: 3 }} />
 
@@ -254,13 +263,13 @@ const ProductDetail = () => {
                     </Typography>
                     <IconButton
                       onClick={() => handleQuantityChange(1)}
-                      disabled={quantity >= product.stock}
+                      disabled={quantity >= Math.min(product.stock, MAX_QUANTITY_PER_PRODUCT)}
                     >
                       <Add />
                     </IconButton>
                   </Box>
                   <Typography variant="body2" color="text.secondary">
-                    (Max: {product.stock})
+                    (Max: {MAX_QUANTITY_PER_PRODUCT} per order)
                   </Typography>
                 </Box>
               </Box>
