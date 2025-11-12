@@ -6,16 +6,16 @@
 
 export const API_CONFIG = {
   // Base URL for API
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  BASE_URL: process.env.REACT_APP_API_URL || 'https://shop-e.vercel.app/api',
   
   // Timeout for requests (in milliseconds)
   TIMEOUT: 10000,
   
   // Enable API integration
-  USE_API: process.env.REACT_APP_USE_API === 'true' || false,
+  USE_API: process.env.REACT_APP_USE_API === 'true' || true,
   
   // Enable mock data fallback
-  USE_MOCK_FALLBACK: true,
+  USE_MOCK_FALLBACK: false,
 };
 
 /**

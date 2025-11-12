@@ -45,8 +45,12 @@ import {
   Search,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import { loadOrders, saveOrders, orderStatuses, paymentStatuses } from '../../data/orders';
+import { orderService } from '../../services/orderService';
 import { formatCurrency } from '../../utils/currency';
+
+// Order status constants
+const orderStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+const paymentStatuses = ['pending', 'completed', 'failed', 'refunded'];
 
 const MotionCard = motion(Card);
 
@@ -55,6 +59,7 @@ const Orders = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -66,8 +71,27 @@ const Orders = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const result = await orderService.getAll();
+      if (result.success && result.data) {
+        setOrders(result.data.orders || result.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to load orders',
+        severity: 'error',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    setOrders(loadOrders());
+    fetchOrders();
   }, []);
 
   const handleOpenDetailDialog = (order) => {
@@ -81,21 +105,34 @@ const Orders = () => {
     setStatusDialogOpen(true);
   };
 
-  const handleUpdateStatus = () => {
-    const updatedOrders = orders.map((order) =>
-      order.id === selectedOrder.id
-        ? { ...order, status: newStatus, updatedAt: new Date().toISOString() }
-        : order
-    );
-    
-    setOrders(updatedOrders);
-    saveOrders(updatedOrders);
-    
-    setSnackbar({
-      open: true,
-      message: `Order status updated to ${newStatus}`,
-      severity: 'success',
-    });
+  const handleUpdateStatus = async () => {
+    try {
+      const result = await orderService.updateStatus(selectedOrder.id, { status: newStatus });
+      
+      if (result.success) {
+        // Refresh orders after update
+        await fetchOrders();
+        
+        setSnackbar({
+          open: true,
+          message: `Order status updated to ${newStatus}`,
+          severity: 'success',
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: result.message || 'Failed to update order status',
+          severity: 'error',
+        });
+      }
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to update order status',
+        severity: 'error',
+      });
+    }
     
     setStatusDialogOpen(false);
   };

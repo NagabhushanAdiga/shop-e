@@ -24,7 +24,7 @@ import { Search, ShoppingCart, FilterList } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { loadProducts } from '../data/products';
+import { productService } from '../services/productService';
 import { formatCurrency } from '../utils/currency';
 
 const MotionCard = motion(Card);
@@ -39,9 +39,23 @@ const Products = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('name');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setProducts(loadProducts());
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const result = await productService.getAll();
+        if (result.success && result.data) {
+          setProducts(result.data.products || result.data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
   }, []);
 
   const categories = ['All', ...new Set(products.map((p) => p.category))];
@@ -175,7 +189,13 @@ const Products = () => {
         </motion.div>
 
         {/* Products Grid */}
-        {filteredProducts.length === 0 ? (
+        {loading ? (
+          <Box sx={{ textAlign: 'center', py: 8 }}>
+            <Typography variant="h6" color="text.secondary">
+              Loading products...
+            </Typography>
+          </Box>
+        ) : filteredProducts.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <Typography variant="h6" color="text.secondary">
               No products found

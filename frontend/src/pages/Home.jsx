@@ -43,7 +43,7 @@ import {
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { loadProducts } from '../data/products';
+import { productService } from '../services/productService';
 import { formatCurrency } from '../utils/currency';
 
 const MotionBox = motion(Box);
@@ -58,9 +58,23 @@ const Home = () => {
   const { addToCart } = useCart();
   const [products, setProducts] = useState([]);
   const [activeSlide, setActiveSlide] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setProducts(loadProducts());
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const result = await productService.getAll();
+        if (result.success && result.data) {
+          setProducts(result.data.products || result.data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
   }, []);
 
   const featuredProducts = products.filter((p) => p.featured);

@@ -28,7 +28,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
-import { loadOrders, saveOrders } from '../data/orders';
+import { orderService } from '../services/orderService';
 import PaymentMethods from '../components/PaymentMethods';
 import { formatCurrency } from '../utils/currency';
 
@@ -41,6 +41,17 @@ const Checkout = () => {
   const { cartItems, getCartTotal, clearCart } = useCart();
   const { user } = useAuth();
   const { addNotification } = useNotifications();
+
+  // Redirect to login if not authenticated
+  React.useEffect(() => {
+    if (!user) {
+      // Save the intended destination
+      localStorage.setItem('redirectAfterLogin', '/checkout');
+      navigate('/login', { 
+        state: { from: '/checkout', message: 'Please login to complete your order' } 
+      });
+    }
+  }, [user, navigate]);
 
   const [formData, setFormData] = useState({
     firstName: '',

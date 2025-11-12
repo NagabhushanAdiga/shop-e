@@ -30,9 +30,9 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { loadProducts } from '../../data/products';
-import { loadOrders } from '../../data/orders';
-import { loadUsers } from '../../data/users';
+import { productService } from '../../services/productService';
+import { orderService } from '../../services/orderService';
+import { userService } from '../../services/userService';
 import { formatCurrency } from '../../utils/currency';
 
 const MotionCard = motion(Card);
@@ -89,12 +89,35 @@ const Dashboard = () => {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    setProducts(loadProducts());
-    setOrders(loadOrders());
-    setUsers(loadUsers());
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const [productsResult, ordersResult, usersResult] = await Promise.all([
+          productService.getAll(),
+          orderService.getAll(),
+          userService.getAll(),
+        ]);
+        
+        if (productsResult.success && productsResult.data) {
+          setProducts(productsResult.data.products || productsResult.data || []);
+        }
+        if (ordersResult.success && ordersResult.data) {
+          setOrders(ordersResult.data.orders || ordersResult.data || []);
+        }
+        if (usersResult.success && usersResult.data) {
+          setUsers(usersResult.data.users || usersResult.data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboardData();
   }, []);
 
   const totalProducts = products.length;

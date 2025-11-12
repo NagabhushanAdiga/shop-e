@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import { Visibility, VisibilityOff, Login as LoginIcon } from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const MotionCard = motion(Card);
@@ -26,6 +26,7 @@ const Login = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, user, isAdmin } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -36,10 +37,17 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Get message from location state (if redirected from cart/checkout)
+  const locationMessage = location.state?.message;
+
   // Redirect if already logged in
   React.useEffect(() => {
     if (user) {
-      if (isAdmin) {
+      const redirectPath = localStorage.getItem('redirectAfterLogin');
+      if (redirectPath) {
+        localStorage.removeItem('redirectAfterLogin');
+        navigate(redirectPath);
+      } else if (isAdmin) {
         navigate('/admin/dashboard');
       } else {
         navigate('/');
@@ -68,8 +76,13 @@ const Login = () => {
 
     try {
       const userData = await login(formData.email, formData.password);
-      // Redirect based on role
-      if (userData.role === 'admin') {
+      
+      // Check for redirect path first
+      const redirectPath = localStorage.getItem('redirectAfterLogin');
+      if (redirectPath) {
+        localStorage.removeItem('redirectAfterLogin');
+        navigate(redirectPath);
+      } else if (userData.role === 'admin') {
         navigate('/admin/dashboard');
       } else {
         navigate('/');
@@ -121,6 +134,12 @@ const Login = () => {
                 <strong>User Demo:</strong> Use any email / any password
               </Typography>
             </Alert>
+
+            {locationMessage && (
+              <Alert severity="info" sx={{ mb: 3 }}>
+                {locationMessage}
+              </Alert>
+            )}
 
             {error && (
               <Alert severity="error" sx={{ mb: 3 }}>

@@ -40,7 +40,15 @@ import {
   Feedback as FeedbackIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import { loadFeedback, saveFeedback, feedbackStatuses } from '../../data/feedback';
+import { feedbackService } from '../../services/feedbackService';
+
+// Feedback statuses constant
+const feedbackStatuses = [
+  { value: 'pending', label: 'Pending', color: 'warning' },
+  { value: 'reviewed', label: 'Reviewed', color: 'info' },
+  { value: 'resolved', label: 'Resolved', color: 'success' },
+  { value: 'closed', label: 'Closed', color: 'default' }
+];
 import { useAuth } from '../../context/AuthContext';
 
 const MotionCard = motion(Card);
@@ -60,10 +68,21 @@ const Feedback = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
+  const fetchFeedback = async () => {
+    try {
+      const result = await feedbackService.getAll();
+      if (result.success) {
+        const feedbackData = result.feedbacks || [];
+        setFeedbacks(feedbackData);
+        setFilteredFeedbacks(feedbackData);
+      }
+    } catch (error) {
+      console.error('Error fetching feedback:', error);
+    }
+  };
+
   useEffect(() => {
-    const loadedFeedback = loadFeedback();
-    setFeedbacks(loadedFeedback);
-    setFilteredFeedbacks(loadedFeedback);
+    fetchFeedback();
   }, []);
 
   useEffect(() => {

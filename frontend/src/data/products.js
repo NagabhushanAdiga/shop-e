@@ -1,3 +1,7 @@
+// ⚠️ DEPRECATED: This static data is no longer used in the application
+// The app now fetches data from the backend API at https://shop-e.vercel.app/api
+// This file is kept for reference only
+
 // Mock product data - In a real app, this would come from an API
 // All prices are in Indian Rupees (₹)
 export const initialProducts = [

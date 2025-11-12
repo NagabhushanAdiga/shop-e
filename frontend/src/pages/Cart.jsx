@@ -22,6 +22,7 @@ import { Add, Remove, Delete, ShoppingCart, ArrowForward } from '@mui/icons-mate
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/currency';
 
 const MotionCard = motion(Card);
@@ -33,12 +34,32 @@ const Cart = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const { cartItems, updateQuantity, removeFromCart, getCartTotal, clearCart } = useCart();
+  const { user } = useAuth();
 
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const [loginPromptOpen, setLoginPromptOpen] = useState(false);
 
   const handleClearCart = () => {
     clearCart();
     setClearDialogOpen(false);
+  };
+
+  const handleProceedToCheckout = () => {
+    if (!user) {
+      // User is not logged in, show login prompt
+      setLoginPromptOpen(true);
+    } else {
+      // User is logged in, proceed to checkout
+      navigate('/checkout');
+    }
+  };
+
+  const handleLoginRedirect = () => {
+    // Save the intended destination
+    localStorage.setItem('redirectAfterLogin', '/checkout');
+    navigate('/login', { 
+      state: { from: '/cart', message: 'Please login to complete your order' } 
+    });
   };
 
   if (cartItems.length === 0) {
@@ -268,7 +289,7 @@ const Cart = () => {
                 variant="contained"
                 size="large"
                 endIcon={<ArrowForward />}
-                onClick={() => navigate('/checkout')}
+                onClick={handleProceedToCheckout}
                 sx={{
                   mt: 3,
                   py: 1.5,
@@ -309,6 +330,36 @@ const Cart = () => {
             <Button onClick={() => setClearDialogOpen(false)}>Cancel</Button>
             <Button onClick={handleClearCart} color="error" variant="contained">
               Clear Cart
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Login Prompt Dialog */}
+        <Dialog
+          open={loginPromptOpen}
+          onClose={() => setLoginPromptOpen(false)}
+          maxWidth="xs"
+          fullWidth
+        >
+          <DialogTitle>Login Required</DialogTitle>
+          <DialogContent>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              You need to be logged in to place an order
+            </Alert>
+            <Typography>
+              Please login or create an account to proceed with your order. Your cart items will be saved.
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setLoginPromptOpen(false)}>Continue Shopping</Button>
+            <Button 
+              onClick={handleLoginRedirect} 
+              variant="contained"
+              sx={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              }}
+            >
+              Login / Signup
             </Button>
           </DialogActions>
         </Dialog>

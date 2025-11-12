@@ -32,7 +32,7 @@ import {
 } from '@mui/material';
 import { Add, Edit, Delete, Category as CategoryIcon, Search } from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import { loadCategories, saveCategories } from '../../data/categories';
+import { categoryService } from '../../services/categoryService';
 
 const MotionCard = motion(Card);
 
@@ -41,6 +41,7 @@ const Categories = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -59,8 +60,27 @@ const Categories = () => {
     active: true,
   });
 
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+      const result = await categoryService.getAll();
+      if (result.success) {
+        setCategories(result.categories || []);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to load categories',
+        severity: 'error',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    setCategories(loadCategories());
+    fetchCategories();
   }, []);
 
   const handleOpenDialog = (category = null) => {
@@ -107,7 +127,7 @@ const Categories = () => {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name || !formData.description) {
       setSnackbar({
         open: true,
@@ -117,50 +137,78 @@ const Categories = () => {
       return;
     }
 
-    let updatedCategories;
-
-    if (selectedCategory) {
-      // Edit
-      updatedCategories = categories.map((cat) =>
-        cat.id === selectedCategory.id
-          ? { ...cat, ...formData, updatedAt: new Date().toISOString() }
-          : cat
-      );
+    try {
+      let result;
+      
+      if (selectedCategory) {
+        // Edit existing category
+        result = await categoryService.update(selectedCategory.id, formData);
+        if (result.success) {
+          setSnackbar({
+            open: true,
+            message: 'Category updated successfully!',
+            severity: 'success',
+          });
+        }
+      } else {
+        // Add new category
+        result = await categoryService.create(formData);
+        if (result.success) {
+          setSnackbar({
+            open: true,
+            message: 'Category added successfully!',
+            severity: 'success',
+          });
+        }
+      }
+      
+      if (result.success) {
+        await fetchCategories(); // Refresh the list
+        handleCloseDialog();
+      } else {
+        setSnackbar({
+          open: true,
+          message: result.message || 'Failed to save category',
+          severity: 'error',
+        });
+      }
+    } catch (error) {
+      console.error('Error saving category:', error);
       setSnackbar({
         open: true,
-        message: 'Category updated successfully!',
-        severity: 'success',
-      });
-    } else {
-      // Add
-      const newCategory = {
-        id: Math.max(...categories.map((c) => c.id), 0) + 1,
-        ...formData,
-        productCount: 0,
-        createdAt: new Date().toISOString(),
-      };
-      updatedCategories = [...categories, newCategory];
-      setSnackbar({
-        open: true,
-        message: 'Category added successfully!',
-        severity: 'success',
+        message: 'Failed to save category',
+        severity: 'error',
       });
     }
-
-    setCategories(updatedCategories);
-    saveCategories(updatedCategories);
-    handleCloseDialog();
   };
 
-  const handleDelete = () => {
-    const updatedCategories = categories.filter((cat) => cat.id !== selectedCategory.id);
-    setCategories(updatedCategories);
-    saveCategories(updatedCategories);
-    setSnackbar({
-      open: true,
-      message: 'Category deleted successfully!',
-      severity: 'success',
-    });
+  const handleDelete = async () => {
+    try {
+      const result = await categoryService.delete(selectedCategory.id);
+      
+      if (result.success) {
+        await fetchCategories(); // Refresh the list
+        setSnackbar({
+          open: true,
+          message: 'Category deleted successfully!',
+          severity: 'success',
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: result.message || 'Failed to delete category',
+          severity: 'error',
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to delete category',
+        severity: 'error',
+      });
+    }
+    
     setDeleteDialogOpen(false);
     setSelectedCategory(null);
   };

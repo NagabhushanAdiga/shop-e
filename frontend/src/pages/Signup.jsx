@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import { Visibility, VisibilityOff, PersonAdd } from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const MotionCard = motion(Card);
@@ -26,6 +26,7 @@ const Signup = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
+  const location = useLocation();
   const { signup, user, isAdmin } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -39,10 +40,17 @@ const Signup = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Get message from location state (if redirected from cart/checkout)
+  const locationMessage = location.state?.message;
+
   // Redirect if already logged in
   React.useEffect(() => {
     if (user) {
-      if (isAdmin) {
+      const redirectPath = localStorage.getItem('redirectAfterLogin');
+      if (redirectPath) {
+        localStorage.removeItem('redirectAfterLogin');
+        navigate(redirectPath);
+      } else if (isAdmin) {
         navigate('/admin/dashboard');
       } else {
         navigate('/');
@@ -94,8 +102,13 @@ const Signup = () => {
 
     try {
       const userData = await signup(formData.name, formData.email, formData.password);
-      // Redirect based on role (though signup always creates regular users)
-      if (userData.role === 'admin') {
+      
+      // Check for redirect path first
+      const redirectPath = localStorage.getItem('redirectAfterLogin');
+      if (redirectPath) {
+        localStorage.removeItem('redirectAfterLogin');
+        navigate(redirectPath);
+      } else if (userData.role === 'admin') {
         navigate('/admin/dashboard');
       } else {
         navigate('/');
@@ -137,6 +150,12 @@ const Signup = () => {
                 Join us and start shopping!
               </Typography>
             </Box>
+
+            {locationMessage && (
+              <Alert severity="info" sx={{ mb: 3 }}>
+                {locationMessage}
+              </Alert>
+            )}
 
             {error && (
               <Alert severity="error" sx={{ mb: 3 }}>

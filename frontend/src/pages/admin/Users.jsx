@@ -35,7 +35,11 @@ import {
 } from '@mui/material';
 import { Add, Edit, Delete, Block, CheckCircle, Search, Visibility, VisibilityOff, Close, Email, Phone, Person, CalendarToday, ShoppingCart, AttachMoney, AdminPanelSettings } from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import { loadUsers, saveUsers, userRoles, userStatuses } from '../../data/users';
+import { userService } from '../../services/userService';
+
+// User roles and statuses constants
+const userRoles = ['user', 'admin'];
+const userStatuses = ['active', 'inactive', 'suspended'];
 import { formatCurrency } from '../../utils/currency';
 
 const MotionCard = motion(Card);
@@ -71,8 +75,24 @@ const Users = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const fetchUsers = async () => {
+    try {
+      const result = await userService.getAll();
+      if (result.success && result.data) {
+        setUsers(result.data.users || result.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to load users',
+        severity: 'error',
+      });
+    }
+  };
+
   useEffect(() => {
-    setUsers(loadUsers());
+    fetchUsers();
   }, []);
 
   const handleOpenDialog = (user = null) => {

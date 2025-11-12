@@ -37,9 +37,9 @@ import {
   BarChart,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import { loadOrders } from '../../data/orders';
-import { loadUsers } from '../../data/users';
-import { loadProducts } from '../../data/products';
+import { orderService } from '../../services/orderService';
+import { userService } from '../../services/userService';
+import { productService } from '../../services/productService';
 import { formatCurrency } from '../../utils/currency';
 
 const MotionCard = motion(Card);
@@ -55,9 +55,28 @@ const Reports = () => {
   const [dateRange, setDateRange] = useState('30days');
 
   useEffect(() => {
-    setOrders(loadOrders());
-    setUsers(loadUsers());
-    setProducts(loadProducts());
+    const fetchReportData = async () => {
+      try {
+        const [ordersResult, usersResult, productsResult] = await Promise.all([
+          orderService.getAll(),
+          userService.getAll(),
+          productService.getAll(),
+        ]);
+        
+        if (ordersResult.success && ordersResult.data) {
+          setOrders(ordersResult.data.orders || ordersResult.data || []);
+        }
+        if (usersResult.success && usersResult.data) {
+          setUsers(usersResult.data.users || usersResult.data || []);
+        }
+        if (productsResult.success && productsResult.data) {
+          setProducts(productsResult.data.products || productsResult.data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching report data:', error);
+      }
+    };
+    fetchReportData();
   }, []);
 
   // Calculate statistics
