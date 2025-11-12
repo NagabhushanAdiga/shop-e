@@ -16,6 +16,7 @@ const orderRoutes = require('./routes/orders');
 const feedbackRoutes = require('./routes/feedback');
 const reportRoutes = require('./routes/reports');
 const paymentRoutes = require('./routes/payments');
+const setupRoutes = require('./routes/setup');
 
 // Import error handler
 const errorHandler = require('./middleware/errorHandler');
@@ -92,17 +93,50 @@ if (process.env.NODE_ENV === 'development') {
 app.use('/uploads', express.static('uploads'));
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/shop-e', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-  .then(() => console.log('✅ MongoDB Connected Successfully'))
-  .catch((err) => {
+// Handle mongoose connection for serverless
+let isConnected = false;
+
+const connectDB = async () => {
+  if (isConnected) {
+    console.log('Using existing database connection');
+    return;
+  }
+
+  try {
+    const db = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/shop-e', {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+
+    isConnected = db.connections[0].readyState === 1;
+    console.log('✅ MongoDB Connected Successfully');
+  } catch (err) {
     console.error('❌ MongoDB Connection Error:', err.message);
-    process.exit(1);
-  });
+    throw err;
+  }
+};
+
+// Initialize connection
+connectDB().catch(err => console.error('Initial DB connection failed:', err));
+
+// Middleware to ensure DB connection before handling API requests
+app.use('/api', async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    res.status(503).json({
+      success: false,
+      message: 'Database connection failed',
+      error: error.message
+    });
+  }
+});
 
 // Routes
+app.use('/api/setup', setupRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
@@ -141,16 +175,21 @@ app.use((req, res) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-  console.log(`📝 API available at http://localhost:${PORT}/api`);
-});
+// Start server (only for local development)
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+    console.log(`📝 API available at http://localhost:${PORT}/api`);
+  });
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err) => {
-  console.error('❌ Unhandled Rejection:', err.message);
-  // Close server & exit process
-  process.exit(1);
-});
+  // Handle unhandled promise rejections
+  process.on('unhandledRejection', (err) => {
+    console.error('❌ Unhandled Rejection:', err.message);
+    // Close server & exit process
+    process.exit(1);
+  });
+}
+
+// Export app for Vercel
+module.exports = app;
 
