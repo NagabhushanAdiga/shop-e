@@ -32,6 +32,7 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { loadOrders } from '../data/orders';
+import { formatCurrency } from '../utils/currency';
 
 const MotionCard = motion(Card);
 
@@ -187,6 +188,10 @@ const OrderTracking = () => {
                     sx={{ fontWeight: 600 }}
                   />
                 </Box>
+                
+                <Alert severity="warning" icon={false} sx={{ mt: 2, fontWeight: 600 }}>
+                  ⚠️ POLICY: NO RETURN | NO REFUND | NO EXCHANGE
+                </Alert>
               </Box>
 
               <Divider sx={{ my: 3 }} />
@@ -290,10 +295,10 @@ const OrderTracking = () => {
                   <ListItem key={index} divider={index < order.items.length - 1}>
                     <ListItemText
                       primary={<Typography fontWeight={600}>{item.name}</Typography>}
-                      secondary={`Quantity: ${item.quantity} × $${item.price.toFixed(2)}`}
+                      secondary={`Quantity: ${item.quantity} × ${formatCurrency(item.price)}`}
                     />
                     <Typography variant="body1" fontWeight={700} color="primary">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      {formatCurrency(item.price * item.quantity)}
                     </Typography>
                   </ListItem>
                 ))}
@@ -304,19 +309,19 @@ const OrderTracking = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="body2">Subtotal:</Typography>
                   <Typography variant="body2" fontWeight={600}>
-                    ${order.subtotal.toFixed(2)}
+                    {formatCurrency(order.subtotal)}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="body2">Shipping:</Typography>
                   <Typography variant="body2" fontWeight={600}>
-                    ${order.shipping.toFixed(2)}
+                    {formatCurrency(order.shipping)}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2">Tax:</Typography>
+                  <Typography variant="body2">Tax (GST 18%):</Typography>
                   <Typography variant="body2" fontWeight={600}>
-                    ${order.tax.toFixed(2)}
+                    {formatCurrency(order.tax)}
                   </Typography>
                 </Box>
                 <Divider sx={{ my: 1 }} />
@@ -325,7 +330,7 @@ const OrderTracking = () => {
                     Total:
                   </Typography>
                   <Typography variant="h6" fontWeight={700} color="primary">
-                    ${order.total.toFixed(2)}
+                    {formatCurrency(order.total)}
                   </Typography>
                 </Box>
               </Box>

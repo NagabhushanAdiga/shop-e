@@ -30,6 +30,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import { loadOrders, saveOrders } from '../data/orders';
 import PaymentMethods from '../components/PaymentMethods';
+import { formatCurrency } from '../utils/currency';
 
 const MotionCard = motion(Card);
 
@@ -154,7 +155,7 @@ const Checkout = () => {
     addNotification({
       type: 'order',
       title: 'New Order Received!',
-      message: `Order ${newOrder.orderNumber} from ${newOrder.customer.name} - ₹${total.toFixed(2)}`,
+      message: `Order ${newOrder.orderNumber} from ${newOrder.customer.name} - ${formatCurrency(total)}`,
       link: '/admin/orders',
     });
     
@@ -181,8 +182,8 @@ const Checkout = () => {
   }
 
   const subtotal = getCartTotal();
-  const shipping = subtotal > 50 ? 0 : 5.99;
-  const tax = subtotal * 0.08;
+  const shipping = subtotal > 4000 ? 0 : 99;
+  const tax = subtotal * 0.18; // GST 18%
   const total = subtotal + shipping + tax;
 
   const usStates = [
@@ -349,6 +350,10 @@ const Checkout = () => {
                 </CardContent>
               </MotionCard>
 
+                <Alert severity="warning" icon={false} sx={{ mt: 3, mb: 2, fontWeight: 600 }}>
+                  ⚠️ POLICY NOTICE: NO RETURN | NO REFUND | NO EXCHANGE
+                </Alert>
+
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
                   <Button
                     variant="contained"
@@ -437,6 +442,19 @@ const Checkout = () => {
                       </Typography>
                     </Box>
                   )}
+                  
+                  <Alert severity="info" sx={{ mb: 3, textAlign: 'left' }}>
+                    <Typography variant="body2" fontWeight={600}>
+                      📋 Important Policy Notice:
+                    </Typography>
+                    <Typography variant="body2" sx={{ mt: 1 }}>
+                      • NO RETURN • NO REFUND • NO EXCHANGE
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                      Please inspect your order carefully upon delivery. All sales are final.
+                    </Typography>
+                  </Alert>
+
                   <Button
                     variant="contained"
                     size="large"
@@ -484,7 +502,7 @@ const Checkout = () => {
                           {item.name} × {item.quantity}
                         </Typography>
                         <Typography variant="body2" fontWeight={600}>
-                          ₹{(item.price * item.quantity).toFixed(2)}
+                          {formatCurrency(item.price * item.quantity)}
                         </Typography>
                       </Box>
                     ))}
@@ -497,19 +515,19 @@ const Checkout = () => {
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                       <Typography variant="body2">Subtotal:</Typography>
                       <Typography variant="body2" fontWeight={600}>
-                        ₹{subtotal.toFixed(2)}
+                        {formatCurrency(subtotal)}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                       <Typography variant="body2">Shipping:</Typography>
                       <Typography variant="body2" fontWeight={600}>
-                        {shipping === 0 ? 'FREE' : `₹${shipping.toFixed(2)}`}
+                        {shipping === 0 ? 'FREE' : formatCurrency(shipping)}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                       <Typography variant="body2">Tax:</Typography>
                       <Typography variant="body2" fontWeight={600}>
-                        ₹{tax.toFixed(2)}
+                        {formatCurrency(tax)}
                       </Typography>
                     </Box>
 
@@ -520,7 +538,7 @@ const Checkout = () => {
                         Total:
                       </Typography>
                       <Typography variant="h6" color="primary" fontWeight={700}>
-                        ${total.toFixed(2)}
+                        {formatCurrency(total)}
                       </Typography>
                     </Box>
                   </Box>

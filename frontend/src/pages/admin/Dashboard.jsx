@@ -33,6 +33,7 @@ import { useNavigate } from 'react-router-dom';
 import { loadProducts } from '../../data/products';
 import { loadOrders } from '../../data/orders';
 import { loadUsers } from '../../data/users';
+import { formatCurrency } from '../../utils/currency';
 
 const MotionCard = motion(Card);
 
@@ -168,7 +169,7 @@ const Dashboard = () => {
         <Grid item xs={12} sm={6} lg={3}>
           <StatCard
             title="Total Revenue"
-            value={`$${totalValue.toFixed(0)}`}
+            value={formatCurrency(totalValue)}
             icon={<AttachMoney sx={{ fontSize: 32 }} />}
             gradient="linear-gradient(135deg, #52c41a 0%, #1890ff 100%)"
             trend="+12.5%"
@@ -245,7 +246,7 @@ const Dashboard = () => {
                         </TableCell>
                         <TableCell align="right">
                           <Typography variant="body2" fontWeight={600}>
-                            ${order.total.toFixed(2)}
+                            {formatCurrency(order.total)}
                           </Typography>
                         </TableCell>
                         <TableCell>
@@ -346,7 +347,7 @@ const Dashboard = () => {
                         {category}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {stats.count} products | ${stats.value.toFixed(0)}
+                        {stats.count} products | {formatCurrency(stats.value)}
                       </Typography>
                     </Box>
                     <LinearProgress
@@ -389,7 +390,7 @@ const Dashboard = () => {
                         {method}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {stats.count} orders | ${stats.amount.toFixed(2)}
+                        {stats.count} orders | {formatCurrency(stats.amount)}
                       </Typography>
                     </Box>
                     <LinearProgress

@@ -25,6 +25,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { loadProducts } from '../data/products';
+import { formatCurrency } from '../utils/currency';
 
 const MotionCard = motion(Card);
 
@@ -257,7 +258,7 @@ const Products = () => {
                       </Typography>
                     </Box>
                     <Typography variant="h6" color="primary" fontWeight={700}>
-                      ${product.price.toFixed(2)}
+                      {formatCurrency(product.price)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       {product.stock} in stock

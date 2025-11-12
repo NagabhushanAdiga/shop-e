@@ -40,6 +40,7 @@ import { motion } from 'framer-motion';
 import { loadOrders } from '../../data/orders';
 import { loadUsers } from '../../data/users';
 import { loadProducts } from '../../data/products';
+import { formatCurrency } from '../../utils/currency';
 
 const MotionCard = motion(Card);
 
@@ -274,7 +275,7 @@ const Reports = () => {
         <Grid item xs={12} sm={6} lg={3}>
           <StatCard
             title="Total Revenue"
-            value={`$${totalRevenue.toFixed(2)}`}
+            value={formatCurrency(totalRevenue)}
             icon={<AttachMoney sx={{ fontSize: 28 }} />}
             trend="up"
             trendValue={revenueGrowth}
@@ -304,7 +305,7 @@ const Reports = () => {
         <Grid item xs={12} sm={6} lg={3}>
           <StatCard
             title="Avg Order Value"
-            value={`$${averageOrderValue.toFixed(2)}`}
+            value={formatCurrency(averageOrderValue)}
             icon={<BarChart sx={{ fontSize: 28 }} />}
             gradient="linear-gradient(135deg, #faad14 0%, #ffc53d 100%)"
           />
@@ -500,7 +501,7 @@ const Reports = () => {
                         </TableCell>
                         <TableCell align="right">
                           <Typography variant="body2" fontWeight={600} color="success.main">
-                            ${product.revenue.toFixed(2)}
+                            {formatCurrency(product.revenue)}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -569,7 +570,7 @@ const Reports = () => {
                         </TableCell>
                         <TableCell align="right">
                           <Typography variant="body2" fontWeight={600} color="success.main">
-                            ${customer.total.toFixed(2)}
+                            {formatCurrency(customer.total)}
                           </Typography>
                         </TableCell>
                       </TableRow>

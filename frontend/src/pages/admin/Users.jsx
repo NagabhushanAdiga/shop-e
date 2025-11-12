@@ -36,6 +36,7 @@ import {
 import { Add, Edit, Delete, Block, CheckCircle, Search, Visibility, VisibilityOff, Close, Email, Phone, Person, CalendarToday, ShoppingCart, AttachMoney, AdminPanelSettings } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { loadUsers, saveUsers, userRoles, userStatuses } from '../../data/users';
+import { formatCurrency } from '../../utils/currency';
 
 const MotionCard = motion(Card);
 
@@ -405,7 +406,7 @@ const Users = () => {
                 Total Revenue
               </Typography>
               <Typography variant="h4" fontWeight={700} sx={{ color: '#52c41a' }}>
-                ${users.reduce((sum, u) => sum + (u.totalSpent || 0), 0).toFixed(2)}
+                {formatCurrency(users.reduce((sum, u) => sum + (u.totalSpent || 0), 0))}
               </Typography>
             </CardContent>
           </MotionCard>
@@ -481,7 +482,7 @@ const Users = () => {
                     </TableCell>
                     <TableCell align="right">
                       <Typography variant="body2" fontWeight={600}>
-                        ${user.totalSpent.toFixed(2)}
+                        {formatCurrency(user.totalSpent)}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -575,7 +576,7 @@ const Users = () => {
                       </Box>
                       <Box sx={{ mt: 1 }}>
                         <Typography variant="caption" color="text.secondary">
-                          Orders: {user.totalOrders} | Spent: ${user.totalSpent.toFixed(2)}
+                          Orders: {user.totalOrders} | Spent: {formatCurrency(user.totalSpent)}
                         </Typography>
                       </Box>
                       <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -1069,7 +1070,7 @@ const Users = () => {
                       Total Spent
                     </Typography>
                     <Typography variant="h5" fontWeight={600} color="success.main">
-                      ${viewingUser.totalSpent.toFixed(2)}
+                      {formatCurrency(viewingUser.totalSpent)}
                     </Typography>
                   </Box>
                 </Box>
@@ -1095,9 +1096,9 @@ const Users = () => {
                       Average Order Value
                     </Typography>
                     <Typography variant="h6" fontWeight={600}>
-                      ${viewingUser.totalOrders > 0 
-                        ? (viewingUser.totalSpent / viewingUser.totalOrders).toFixed(2)
-                        : '0.00'
+                      {viewingUser.totalOrders > 0 
+                        ? formatCurrency(viewingUser.totalSpent / viewingUser.totalOrders)
+                        : formatCurrency(0)
                       }
                     </Typography>
                   </Box>

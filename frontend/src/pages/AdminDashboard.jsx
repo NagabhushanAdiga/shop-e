@@ -48,6 +48,7 @@ import {
   Search,
   FilterList,
 } from '@mui/icons-material';
+import { formatCurrency } from '../utils/currency';
 import { motion } from 'framer-motion';
 import { loadProducts, saveProducts, initialProducts } from '../data/products';
 
@@ -382,7 +383,7 @@ const AdminDashboard = () => {
             },
             {
               title: 'Total Inventory Value',
-              value: `$${totalValue.toFixed(2)}`,
+              value: formatCurrency(totalValue),
               icon: <AttachMoney sx={{ fontSize: 40 }} />,
               color: '#52c41a',
             },
@@ -394,7 +395,7 @@ const AdminDashboard = () => {
             },
             {
               title: 'Average Price',
-              value: `$${avgPrice.toFixed(2)}`,
+              value: formatCurrency(avgPrice),
               icon: <TrendingUp sx={{ fontSize: 40 }} />,
               color: '#faad14',
             },
@@ -512,7 +513,7 @@ const AdminDashboard = () => {
                           </Typography>
                           <Chip label={product.category} size="small" sx={{ mb: 1 }} />
                           <Typography variant="body2" color="text.secondary">
-                            Price: ${product.price.toFixed(2)}
+                            Price: {formatCurrency(product.price)}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
                             Stock: {product.stock}
@@ -587,7 +588,7 @@ const AdminDashboard = () => {
                         <TableCell>
                           <Chip label={product.category} size="small" />
                         </TableCell>
-                        <TableCell align="right">${product.price.toFixed(2)}</TableCell>
+                        <TableCell align="right">{formatCurrency(product.price)}</TableCell>
                         <TableCell align="right">
                           <Chip
                             label={product.stock}

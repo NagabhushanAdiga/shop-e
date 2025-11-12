@@ -19,8 +19,11 @@ import { Close, Add, Remove, Delete } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { formatCurrency } from '../utils/currency';
 
 const MotionCard = motion(Card);
+
+const MAX_QUANTITY_PER_PRODUCT = 5;
 
 const CartDialog = () => {
   const theme = useTheme();
@@ -130,7 +133,7 @@ const CartDialog = () => {
                         {item.name}
                       </Typography>
                       <Typography variant="h6" color="primary" sx={{ mt: 0.5 }}>
-                        ${item.price.toFixed(2)}
+                        {formatCurrency(item.price)}
                       </Typography>
                     </Box>
 
@@ -146,6 +149,7 @@ const CartDialog = () => {
                         <IconButton
                           size="small"
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          disabled={item.quantity <= 1}
                           sx={{
                             border: '1px solid',
                             borderColor: 'divider',
@@ -159,6 +163,7 @@ const CartDialog = () => {
                         <IconButton
                           size="small"
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          disabled={item.quantity >= MAX_QUANTITY_PER_PRODUCT}
                           sx={{
                             border: '1px solid',
                             borderColor: 'divider',
@@ -167,6 +172,11 @@ const CartDialog = () => {
                           <Add fontSize="small" />
                         </IconButton>
                       </Box>
+                      {item.quantity >= MAX_QUANTITY_PER_PRODUCT && (
+                        <Typography variant="caption" color="warning.main" sx={{ fontSize: '0.7rem' }}>
+                          Max: {MAX_QUANTITY_PER_PRODUCT}
+                        </Typography>
+                      )}
 
                       <IconButton
                         color="error"
@@ -203,7 +213,7 @@ const CartDialog = () => {
             >
               <Typography variant="h6">Total:</Typography>
               <Typography variant="h5" color="primary" fontWeight={700}>
-                ${getCartTotal().toFixed(2)}
+                {formatCurrency(getCartTotal())}
               </Typography>
             </Box>
 

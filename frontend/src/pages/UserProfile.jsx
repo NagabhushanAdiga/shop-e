@@ -44,6 +44,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { loadOrders } from '../data/orders';
+import { formatCurrency } from '../utils/currency';
 
 const MotionCard = motion(Card);
 
@@ -189,7 +190,7 @@ const UserProfile = () => {
                     color="success"
                   />
                   <Chip
-                    label={`$${totalSpent.toFixed(2)} Spent`}
+                    label={`${formatCurrency(totalSpent)} Spent`}
                     color="secondary"
                   />
                 </Box>
@@ -298,7 +299,7 @@ const UserProfile = () => {
                   <Grid item xs={12} sm={4}>
                     <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'secondary.lighter' }}>
                       <Typography variant="h4" color="secondary" fontWeight={700}>
-                        ${totalSpent.toFixed(2)}
+                        {formatCurrency(totalSpent)}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Total Spent
@@ -437,7 +438,7 @@ const UserProfile = () => {
                             Total Amount:
                           </Typography>
                           <Typography variant="h6" color="primary" fontWeight={700}>
-                            ${order.total.toFixed(2)}
+                            {formatCurrency(order.total)}
                           </Typography>
                         </Box>
                       </CardContent>
@@ -653,10 +654,10 @@ const UserProfile = () => {
                     <ListItem key={index} divider={index < selectedOrder.items.length - 1}>
                       <ListItemText
                         primary={<Typography fontWeight={600}>{item.name}</Typography>}
-                        secondary={`Quantity: ${item.quantity} × $${item.price.toFixed(2)}`}
+                        secondary={`Quantity: ${item.quantity} × ${formatCurrency(item.price)}`}
                       />
                       <Typography variant="body1" fontWeight={700} color="primary">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        {formatCurrency(item.price * item.quantity)}
                       </Typography>
                     </ListItem>
                   ))}
@@ -667,19 +668,19 @@ const UserProfile = () => {
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                     <Typography variant="body2">Subtotal:</Typography>
                     <Typography variant="body2" fontWeight={600}>
-                      ${selectedOrder.subtotal.toFixed(2)}
+                      {formatCurrency(selectedOrder.subtotal)}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                     <Typography variant="body2">Shipping:</Typography>
                     <Typography variant="body2" fontWeight={600}>
-                      ${selectedOrder.shipping.toFixed(2)}
+                      {formatCurrency(selectedOrder.shipping)}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2">Tax:</Typography>
+                    <Typography variant="body2">Tax (GST 18%):</Typography>
                     <Typography variant="body2" fontWeight={600}>
-                      ${selectedOrder.tax.toFixed(2)}
+                      {formatCurrency(selectedOrder.tax)}
                     </Typography>
                   </Box>
                   <Divider sx={{ my: 1 }} />
@@ -688,10 +689,15 @@ const UserProfile = () => {
                       Total:
                     </Typography>
                     <Typography variant="h6" fontWeight={700} color="primary">
-                      ${selectedOrder.total.toFixed(2)}
+                      {formatCurrency(selectedOrder.total)}
                     </Typography>
                   </Box>
                 </Box>
+
+                {/* Policy Notice */}
+                <Alert severity="warning" icon={false} sx={{ mt: 3, fontWeight: 600 }}>
+                  ⚠️ POLICY: NO RETURN | NO REFUND | NO EXCHANGE
+                </Alert>
 
                 {/* Timestamps */}
                 <Box sx={{ mt: 2 }}>

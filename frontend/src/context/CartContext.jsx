@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const CartContext = createContext();
 
+const MAX_QUANTITY_PER_PRODUCT = 5;
+
 export const useCart = () => {
   const context = useContext(CartContext);
   if (!context) {
@@ -34,12 +36,12 @@ export const CartProvider = ({ children }) => {
       if (existingItem) {
         return prevItems.map((item) =>
           item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: Math.min(item.quantity + quantity, MAX_QUANTITY_PER_PRODUCT) }
             : item
         );
       }
       
-      return [...prevItems, { ...product, quantity }];
+      return [...prevItems, { ...product, quantity: Math.min(quantity, MAX_QUANTITY_PER_PRODUCT) }];
     });
     setCartOpen(true);
   };
@@ -54,9 +56,12 @@ export const CartProvider = ({ children }) => {
       return;
     }
     
+    // Enforce maximum quantity limit
+    const limitedQuantity = Math.min(quantity, MAX_QUANTITY_PER_PRODUCT);
+    
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === productId ? { ...item, quantity } : item
+        item.id === productId ? { ...item, quantity: limitedQuantity } : item
       )
     );
   };

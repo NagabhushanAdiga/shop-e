@@ -1,9 +1,10 @@
 // Mock product data - In a real app, this would come from an API
+// All prices are in Indian Rupees (₹)
 export const initialProducts = [
   {
     id: 1,
     name: 'Wireless Headphones',
-    price: 79.99,
+    price: 6499,
     category: 'Electronics',
     description: 'Premium wireless headphones with noise cancellation and 30-hour battery life.',
     image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80',
@@ -14,7 +15,7 @@ export const initialProducts = [
   {
     id: 2,
     name: 'Smart Watch',
-    price: 199.99,
+    price: 16499,
     category: 'Electronics',
     description: 'Advanced fitness tracker with heart rate monitoring and GPS.',
     image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&q=80',
@@ -25,7 +26,7 @@ export const initialProducts = [
   {
     id: 3,
     name: 'Laptop Backpack',
-    price: 49.99,
+    price: 3999,
     category: 'Accessories',
     description: 'Water-resistant laptop backpack with multiple compartments.',
     image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&q=80',
@@ -36,7 +37,7 @@ export const initialProducts = [
   {
     id: 4,
     name: 'Bluetooth Speaker',
-    price: 59.99,
+    price: 4999,
     category: 'Electronics',
     description: 'Portable waterproof speaker with 360-degree sound.',
     image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500&q=80',
@@ -47,7 +48,7 @@ export const initialProducts = [
   {
     id: 5,
     name: 'Running Shoes',
-    price: 89.99,
+    price: 7499,
     category: 'Fashion',
     description: 'Lightweight running shoes with superior cushioning and support.',
     image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&q=80',
@@ -58,7 +59,7 @@ export const initialProducts = [
   {
     id: 6,
     name: 'Coffee Maker',
-    price: 129.99,
+    price: 10999,
     category: 'Home',
     description: 'Programmable coffee maker with thermal carafe.',
     image: 'https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?w=500&q=80',
@@ -69,7 +70,7 @@ export const initialProducts = [
   {
     id: 7,
     name: 'Yoga Mat',
-    price: 29.99,
+    price: 2499,
     category: 'Sports',
     description: 'Non-slip yoga mat with extra cushioning for comfort.',
     image: 'https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=500&q=80',
@@ -80,7 +81,7 @@ export const initialProducts = [
   {
     id: 8,
     name: 'Desk Lamp',
-    price: 39.99,
+    price: 3299,
     category: 'Home',
     description: 'LED desk lamp with adjustable brightness and USB charging port.',
     image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=500&q=80',
@@ -91,7 +92,7 @@ export const initialProducts = [
   {
     id: 9,
     name: 'Sunglasses',
-    price: 69.99,
+    price: 5799,
     category: 'Fashion',
     description: 'Polarized sunglasses with UV protection and stylish design.',
     image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=500&q=80',
@@ -102,7 +103,7 @@ export const initialProducts = [
   {
     id: 10,
     name: 'Water Bottle',
-    price: 24.99,
+    price: 1999,
     category: 'Sports',
     description: 'Insulated stainless steel water bottle keeps drinks cold for 24 hours.',
     image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=500&q=80',
@@ -113,7 +114,7 @@ export const initialProducts = [
   {
     id: 11,
     name: 'Wireless Mouse',
-    price: 34.99,
+    price: 2899,
     category: 'Electronics',
     description: 'Ergonomic wireless mouse with precision tracking.',
     image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=500&q=80',
@@ -124,7 +125,7 @@ export const initialProducts = [
   {
     id: 12,
     name: 'Canvas Tote Bag',
-    price: 19.99,
+    price: 1599,
     category: 'Accessories',
     description: 'Eco-friendly canvas tote bag perfect for shopping or daily use.',
     image: 'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=500&q=80',

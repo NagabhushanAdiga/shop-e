@@ -46,6 +46,7 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { loadOrders, saveOrders, orderStatuses, paymentStatuses } from '../../data/orders';
+import { formatCurrency } from '../../utils/currency';
 
 const MotionCard = motion(Card);
 
@@ -263,7 +264,7 @@ const Orders = () => {
                     </TableCell>
                     <TableCell align="right">
                       <Typography variant="body2" fontWeight={700} color="success.main">
-                        ${order.total.toFixed(2)}
+                        {formatCurrency(order.total)}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -374,7 +375,7 @@ const Orders = () => {
                     />
                   </Box>
                   <Typography variant="h6" color="success.main" fontWeight={700}>
-                    ${order.total.toFixed(2)}
+                    {formatCurrency(order.total)}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     {new Date(order.createdAt).toLocaleDateString()}
@@ -545,10 +546,10 @@ const Orders = () => {
                   <ListItem key={index} divider={index < selectedOrder.items.length - 1}>
                     <ListItemText
                       primary={<Typography fontWeight={600}>{item.name}</Typography>}
-                      secondary={`Quantity: ${item.quantity} × $${item.price.toFixed(2)}`}
+                      secondary={`Quantity: ${item.quantity} × ${formatCurrency(item.price)}`}
                     />
                     <Typography variant="body1" fontWeight={700} color="primary">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      {formatCurrency(item.price * item.quantity)}
                     </Typography>
                   </ListItem>
                 ))}
@@ -558,15 +559,15 @@ const Orders = () => {
               <Box sx={{ mt: 3, p: 2, bgcolor: 'primary.lighter', borderRadius: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="body2">Subtotal:</Typography>
-                  <Typography variant="body2" fontWeight={600}>${selectedOrder.subtotal.toFixed(2)}</Typography>
+                  <Typography variant="body2" fontWeight={600}>{formatCurrency(selectedOrder.subtotal)}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="body2">Shipping:</Typography>
-                  <Typography variant="body2" fontWeight={600}>${selectedOrder.shipping.toFixed(2)}</Typography>
+                  <Typography variant="body2" fontWeight={600}>{formatCurrency(selectedOrder.shipping)}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2">Tax:</Typography>
-                  <Typography variant="body2" fontWeight={600}>${selectedOrder.tax.toFixed(2)}</Typography>
+                  <Typography variant="body2">Tax (GST 18%):</Typography>
+                  <Typography variant="body2" fontWeight={600}>{formatCurrency(selectedOrder.tax)}</Typography>
                 </Box>
                 <Divider sx={{ my: 1 }} />
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -574,7 +575,7 @@ const Orders = () => {
                     Total:
                   </Typography>
                   <Typography variant="h6" fontWeight={700} color="primary">
-                    ${selectedOrder.total.toFixed(2)}
+                    {formatCurrency(selectedOrder.total)}
                   </Typography>
                 </Box>
               </Box>
