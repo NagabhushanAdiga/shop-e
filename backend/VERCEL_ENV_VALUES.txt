@@ -1,0 +1,50 @@
+===============================================
+  🔐 VERCEL ENVIRONMENT VARIABLES
+===============================================
+
+Copy these EXACT values to your Vercel Dashboard:
+Settings → Environment Variables
+
+-------------------
+Variable 1:
+-------------------
+Name: MONGODB_URI
+Value: mongodb+srv://nagbhushanadiga_db_user:PColLUPzUbCRzQGC@cluster0-ecomerce.0heeuul.mongodb.net/shop-e?retryWrites=true&w=majority&appName=Cluster0-ecomerce
+Environment: Production, Preview, Development
+
+-------------------
+Variable 2:
+-------------------
+Name: JWT_SECRET
+Value: shop-e-secret-key-2024-change-in-production-f8a9b3c2d1e4f5a6
+Environment: Production, Preview, Development
+
+-------------------
+Variable 3:
+-------------------
+Name: JWT_EXPIRE
+Value: 7d
+Environment: Production, Preview, Development
+
+-------------------
+Variable 4:
+-------------------
+Name: FRONTEND_URL
+Value: https://shop-e.vercel.app
+Environment: Production, Preview, Development
+
+-------------------
+Variable 5:
+-------------------
+Name: NODE_ENV
+Value: production
+Environment: Production only
+
+===============================================
+
+⚠️ IMPORTANT: After adding all variables, you MUST redeploy!
+
+Go to: Deployments → Click ••• → Redeploy
+
+===============================================
+
