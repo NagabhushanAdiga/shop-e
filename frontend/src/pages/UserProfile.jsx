@@ -28,6 +28,7 @@ import {
   useTheme,
   useMediaQuery,
   Alert,
+  Snackbar,
 } from '@mui/material';
 import {
   Edit,
@@ -118,6 +119,53 @@ const UserProfile = () => {
   const handleViewOrder = (order) => {
     setSelectedOrder(order);
     setOrderDetailDialog(true);
+  };
+
+  const handleCancelOrder = (order) => {
+    setSelectedOrder(order);
+    setCancelDialogOpen(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    try {
+      setLoading(true);
+      const result = await orderService.cancel(selectedOrder._id || selectedOrder.id);
+      
+      if (result.success) {
+        setSnackbar({
+          open: true,
+          message: 'Order cancelled successfully',
+          severity: 'success',
+        });
+        
+        // Refresh orders list
+        const ordersResult = await orderService.getMyOrders();
+        if (ordersResult.success && ordersResult.orders) {
+          setUserOrders(ordersResult.orders);
+        }
+      } else {
+        setSnackbar({
+          open: true,
+          message: result.message || 'Failed to cancel order',
+          severity: 'error',
+        });
+      }
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: 'Failed to cancel order',
+        severity: 'error',
+      });
+    } finally {
+      setLoading(false);
+      setCancelDialogOpen(false);
+    }
+  };
+
+  const canCancelOrder = (order) => {
+    return order.status === 'pending' && 
+           (order.paymentMethod === 'Cash on Delivery' || 
+            ['UPI', 'PhonePe', 'Google Pay'].includes(order.paymentMethod));
   };
 
   const getStatusColor = (status) => {
@@ -392,6 +440,17 @@ const UserProfile = () => {
                               color={getStatusColor(order.status)}
                               icon={getStatusIcon(order.status)}
                             />
+                            {canCancelOrder(order) && (
+                              <Button
+                                variant="outlined"
+                                color="error"
+                                size="small"
+                                onClick={() => handleCancelOrder(order)}
+                                sx={{ mr: 1 }}
+                              >
+                                Cancel Order
+                              </Button>
+                            )}
                             <IconButton
                               color="primary"
                               onClick={() => handleViewOrder(order)}
@@ -736,6 +795,66 @@ const UserProfile = () => {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Cancel Order Confirmation Dialog */}
+        <Dialog
+          open={cancelDialogOpen}
+          onClose={() => setCancelDialogOpen(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Cancel Order</DialogTitle>
+          <DialogContent>
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              Are you sure you want to cancel this order?
+            </Alert>
+            {selectedOrder && (
+              <Box>
+                <Typography variant="body2" gutterBottom>
+                  <strong>Order Number:</strong> {selectedOrder.orderNumber}
+                </Typography>
+                <Typography variant="body2" gutterBottom>
+                  <strong>Payment Method:</strong> {selectedOrder.paymentMethod}
+                </Typography>
+                <Typography variant="body2" gutterBottom>
+                  <strong>Total Amount:</strong> {formatCurrency(selectedOrder.total)}
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 2 }} color="text.secondary">
+                  Once cancelled, you will need to place a new order.
+                </Typography>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setCancelDialogOpen(false)}>
+              Keep Order
+            </Button>
+            <Button 
+              onClick={handleConfirmCancel} 
+              color="error" 
+              variant="contained"
+              disabled={loading}
+            >
+              {loading ? 'Cancelling...' : 'Yes, Cancel Order'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Snackbar for notifications */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert 
+            onClose={() => setSnackbar({ ...snackbar, open: false })} 
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Container>
     </Box>
   );

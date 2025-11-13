@@ -62,6 +62,18 @@ export const orderService = {
   },
 
   /**
+   * Cancel order (User can cancel their own pending COD orders)
+   */
+  cancel: async (id) => {
+    try {
+      const response = await API.put(`/orders/${id}/cancel`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || error.message };
+    }
+  },
+
+  /**
    * Delete order (Admin only)
    */
   delete: async (id) => {

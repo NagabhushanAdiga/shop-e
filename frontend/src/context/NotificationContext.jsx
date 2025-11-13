@@ -85,8 +85,9 @@ export const NotificationProvider = ({ children }) => {
     try {
       const result = await notificationService.markAsRead(notificationId);
       if (result.success) {
+        // Remove the notification from the list after marking as read
         setNotifications((prev) =>
-          prev.map((n) => (n._id === notificationId || n.id === notificationId ? { ...n, read: true } : n))
+          prev.filter((n) => n._id !== notificationId && n.id !== notificationId)
         );
         fetchUnreadCount();
       }
@@ -99,7 +100,8 @@ export const NotificationProvider = ({ children }) => {
     try {
       const result = await notificationService.markAllAsRead();
       if (result.success) {
-        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+        // Clear all notifications after marking as read
+        setNotifications([]);
         setUnreadCount(0);
       }
     } catch (error) {

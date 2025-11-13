@@ -343,6 +343,95 @@ exports.updateOrderStatus = async (req, res) => {
   }
 };
 
+// @desc    Cancel order by user
+// @route   PUT /api/orders/:id/cancel
+// @access  Private (User can cancel their own order)
+exports.cancelOrder = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found',
+      });
+    }
+
+    // Check if user owns this order
+    if (order.user.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to cancel this order',
+      });
+    }
+
+    // Check if order is eligible for cancellation
+    // Only pending orders with Cash on Delivery can be cancelled
+    if (order.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: 'Order cannot be cancelled. It has already been processed.',
+      });
+    }
+
+    if (order.paymentMethod !== 'Cash on Delivery' && !['UPI', 'PhonePe', 'Google Pay'].includes(order.paymentMethod)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Only Cash on Delivery orders can be cancelled.',
+      });
+    }
+
+    // Cancel the order
+    order.status = 'cancelled';
+    order.cancelledAt = Date.now();
+    await order.save();
+
+    // Restore product stock
+    for (let item of order.items) {
+      await Product.findByIdAndUpdate(item.product, {
+        $inc: { stock: item.quantity, soldCount: -item.quantity },
+      });
+    }
+
+    // Update user stats
+    await User.findByIdAndUpdate(order.user, {
+      $inc: { totalOrders: -1, totalSpent: -order.total },
+    });
+
+    // Create notification for admins about cancellation
+    try {
+      const admins = await User.find({ role: 'admin' });
+      const notificationPromises = admins.map(admin =>
+        createNotification(admin._id, {
+          type: 'order',
+          title: 'Order Cancelled by User',
+          message: `Order ${order.orderNumber} was cancelled by ${order.customer.name}`,
+          link: `/admin/orders`,
+          metadata: {
+            orderId: order._id,
+            orderNumber: order.orderNumber,
+            customerName: order.customer.name,
+          },
+        })
+      );
+      await Promise.all(notificationPromises);
+    } catch (notifError) {
+      console.error('Error creating admin notification:', notifError);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Order cancelled successfully',
+      order,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 // @desc    Delete order
 // @route   DELETE /api/orders/:id
 // @access  Private/Admin

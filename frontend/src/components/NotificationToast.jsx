@@ -5,7 +5,7 @@ import { useNotifications } from '../context/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 
 const NotificationToast = () => {
-  const { notifications } = useNotifications();
+  const { notifications, markAsRead } = useNotifications();
   const [open, setOpen] = useState(false);
   const [currentNotification, setCurrentNotification] = useState(null);
   const [lastNotificationId, setLastNotificationId] = useState(null);
@@ -24,14 +24,25 @@ const NotificationToast = () => {
     }
   }, [notifications, lastNotificationId]);
 
-  const handleClose = (event, reason) => {
+  const handleClose = async (event, reason) => {
     if (reason === 'clickaway') {
       return;
     }
+    
+    // Mark as read when dismissed
+    if (currentNotification?._id) {
+      await markAsRead(currentNotification._id);
+    }
+    
     setOpen(false);
   };
 
-  const handleClick = () => {
+  const handleClick = async () => {
+    // Mark as read when clicked
+    if (currentNotification?._id) {
+      await markAsRead(currentNotification._id);
+    }
+    
     if (currentNotification?.link) {
       navigate(currentNotification.link);
     }
