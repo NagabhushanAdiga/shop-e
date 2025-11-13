@@ -51,8 +51,20 @@ import Loader from '../../components/Loader';
 import { useDynamicTitle } from '../../hooks/useDynamicTitle';
 
 // Order status constants
-const orderStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
-const paymentStatuses = ['pending', 'completed', 'failed', 'refunded'];
+const orderStatuses = [
+  { value: 'pending', label: 'Pending', color: 'warning' },
+  { value: 'processing', label: 'Processing', color: 'info' },
+  { value: 'shipped', label: 'Shipped', color: 'primary' },
+  { value: 'delivered', label: 'Delivered', color: 'success' },
+  { value: 'cancelled', label: 'Cancelled', color: 'error' },
+];
+
+const paymentStatuses = [
+  { value: 'pending', label: 'Pending', color: 'warning' },
+  { value: 'paid', label: 'Paid', color: 'success' },
+  { value: 'failed', label: 'Failed', color: 'error' },
+  { value: 'refunded', label: 'Refunded', color: 'default' },
+];
 
 const MotionCard = motion(Card);
 
@@ -112,7 +124,17 @@ const Orders = () => {
 
   const handleUpdateStatus = async () => {
     try {
-      const result = await orderService.updateStatus(selectedOrder.id, { status: newStatus });
+      console.log('🔄 Updating order status:', { 
+        orderId: selectedOrder._id || selectedOrder.id, 
+        newStatus 
+      });
+      
+      const result = await orderService.updateStatus(
+        selectedOrder._id || selectedOrder.id, 
+        { status: newStatus }
+      );
+      
+      console.log('🔄 Update result:', result);
       
       if (result.success) {
         // Refresh orders after update
@@ -131,7 +153,7 @@ const Orders = () => {
         });
       }
     } catch (error) {
-      console.error('Error updating order status:', error);
+      console.error('💥 Update status error:', error);
       setSnackbar({
         open: true,
         message: 'Failed to update order status',
