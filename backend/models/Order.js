@@ -4,7 +4,7 @@ const orderSchema = new mongoose.Schema(
   {
     orderNumber: {
       type: String,
-      required: true,
+      required: false,  // Auto-generated in pre-save hook
       unique: true,
     },
     user: {
@@ -104,11 +104,16 @@ const orderSchema = new mongoose.Schema(
 
 // Generate order number before saving
 orderSchema.pre('save', async function (next) {
-  if (!this.orderNumber) {
-    const count = await mongoose.model('Order').countDocuments();
-    this.orderNumber = `ORD-${Date.now()}-${String(count + 1).padStart(4, '0')}`;
+  try {
+    if (!this.orderNumber) {
+      const count = await mongoose.model('Order').countDocuments();
+      const timestamp = Date.now();
+      this.orderNumber = `ORD-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}-${timestamp.toString().slice(-6)}`;
+    }
+    next();
+  } catch (error) {
+    next(error);
   }
-  next();
 });
 
 module.exports = mongoose.model('Order', orderSchema);
