@@ -91,7 +91,8 @@ const AdminDashboard = () => {
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          product.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === 'All' || product.category === categoryFilter;
+    const productCategory = typeof product.category === 'object' ? product.category.name : product.category;
+    const matchesCategory = categoryFilter === 'All' || productCategory === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
@@ -117,7 +118,7 @@ const AdminDashboard = () => {
       id: product.id,
       name: product.name,
       price: product.price.toString(),
-      category: product.category,
+      category: typeof product.category === 'object' ? product.category.name : product.category,
       description: product.description,
       image: product.image,
       rating: product.rating,
@@ -511,7 +512,7 @@ const AdminDashboard = () => {
                           <Typography variant="h6" gutterBottom>
                             {product.name}
                           </Typography>
-                          <Chip label={product.category} size="small" sx={{ mb: 1 }} />
+                          <Chip label={typeof product.category === 'object' ? product.category.name : product.category} size="small" sx={{ mb: 1 }} />
                           <Typography variant="body2" color="text.secondary">
                             Price: {formatCurrency(product.price)}
                           </Typography>
@@ -586,7 +587,7 @@ const AdminDashboard = () => {
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          <Chip label={product.category} size="small" />
+                          <Chip label={typeof product.category === 'object' ? product.category.name : product.category} size="small" />
                         </TableCell>
                         <TableCell align="right">{formatCurrency(product.price)}</TableCell>
                         <TableCell align="right">

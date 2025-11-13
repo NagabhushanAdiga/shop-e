@@ -749,7 +749,7 @@ const Home = () => {
                         letterSpacing: 1,
                       }}
                     >
-                      {product.category}
+                      {typeof product.category === 'object' ? product.category.name : product.category}
                     </Typography>
                     <Typography variant="h6" fontWeight={700} gutterBottom sx={{ mt: 1, minHeight: 50 }}>
                       {product.name}

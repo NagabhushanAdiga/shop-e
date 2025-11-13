@@ -195,7 +195,7 @@ const ProductDetail = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <Chip label={product.category} sx={{ mb: 2 }} />
+              <Chip label={typeof product.category === 'object' ? product.category.name : product.category} sx={{ mb: 2 }} />
               
               <Typography variant={isMobile ? 'h4' : 'h3'} gutterBottom fontWeight={600}>
                 {product.name}
@@ -306,7 +306,7 @@ const ProductDetail = () => {
                         Category:
                       </Typography>
                       <Typography variant="body2" fontWeight={600}>
-                        {product.category}
+                        {typeof product.category === 'object' ? product.category.name : product.category}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>

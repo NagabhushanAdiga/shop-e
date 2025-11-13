@@ -58,15 +58,19 @@ const Products = () => {
     fetchProducts();
   }, []);
 
-  const categories = ['All', ...new Set(products.map((p) => p.category))];
+  const categories = ['All', ...new Set(products.map((p) => {
+    // Handle both string and object category formats
+    return typeof p.category === 'object' ? p.category.name : p.category;
+  }))];
 
   const filteredProducts = products
     .filter((product) => {
       const matchesSearch = product.name
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
+      const productCategory = typeof product.category === 'object' ? product.category.name : product.category;
       const matchesCategory =
-        selectedCategory === 'All' || product.category === selectedCategory;
+        selectedCategory === 'All' || productCategory === selectedCategory;
       return matchesSearch && matchesCategory;
     })
     .sort((a, b) => {
@@ -241,7 +245,7 @@ const Products = () => {
                   />
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Chip
-                      label={product.category}
+                      label={typeof product.category === 'object' ? product.category.name : product.category}
                       size="small"
                       sx={{ mb: 1 }}
                     />
