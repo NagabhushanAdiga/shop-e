@@ -125,35 +125,35 @@ const Checkout = () => {
   const handlePaymentSuccess = async (paymentData) => {
     setPaymentInfo(paymentData);
     
-    // Create order data
+    // Create order data (matching backend schema)
     const orderData = {
       customer: {
         name: `${formData.firstName} ${formData.lastName}`,
         email: formData.email,
         phone: formData.phone,
+        address: {
+          street: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zipCode,
+          country: 'India',
+        },
       },
       items: cartItems.map(item => ({
-        productId: item.id || item._id,
+        product: item.id || item._id,  // Backend expects 'product', not 'productId'
         name: item.name,
         quantity: item.quantity,
         price: item.price,
         image: item.image,
       })),
       subtotal: subtotal,
-      shipping: shipping,
+      shippingFee: shipping,  // Backend expects 'shippingFee', not 'shipping'
       tax: tax,
       total: total,
       status: 'pending',
       paymentMethod: paymentData.method,
       paymentStatus: paymentData.method === 'Cash on Delivery' ? 'pending' : 'paid',
       transactionId: paymentData.transactionId,
-      shippingAddress: {
-        street: formData.address,
-        city: formData.city,
-        state: formData.state,
-        zipCode: formData.zipCode,
-        country: 'India',
-      },
     };
     
     try {

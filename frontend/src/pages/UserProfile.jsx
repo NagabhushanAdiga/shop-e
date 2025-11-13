@@ -654,14 +654,14 @@ const UserProfile = () => {
                 </Typography>
                 <Paper sx={{ p: 2, bgcolor: 'background.default', mb: 3 }}>
                   <Typography variant="body2">
-                    {selectedOrder.shippingAddress.street}
+                    {selectedOrder.customer?.address?.street || selectedOrder.shippingAddress?.street}
                   </Typography>
                   <Typography variant="body2">
-                    {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state}{' '}
-                    {selectedOrder.shippingAddress.zipCode}
+                    {selectedOrder.customer?.address?.city || selectedOrder.shippingAddress?.city}, {selectedOrder.customer?.address?.state || selectedOrder.shippingAddress?.state}{' '}
+                    {selectedOrder.customer?.address?.zipCode || selectedOrder.shippingAddress?.zipCode}
                   </Typography>
                   <Typography variant="body2">
-                    {selectedOrder.shippingAddress.country}
+                    {selectedOrder.customer?.address?.country || selectedOrder.shippingAddress?.country}
                   </Typography>
                 </Paper>
 
@@ -694,7 +694,7 @@ const UserProfile = () => {
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                     <Typography variant="body2">Shipping:</Typography>
                     <Typography variant="body2" fontWeight={600}>
-                      {formatCurrency(selectedOrder.shipping)}
+                      {formatCurrency(selectedOrder.shippingFee || selectedOrder.shipping || 0)}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
