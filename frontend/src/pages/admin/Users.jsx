@@ -36,11 +36,11 @@ import {
 import { Add, Edit, Delete, Block, CheckCircle, Search, Visibility, VisibilityOff, Close, Email, Phone, Person, CalendarToday, ShoppingCart, AttachMoney, AdminPanelSettings } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { userService } from '../../services/userService';
+import { formatCurrency } from '../../utils/currency';
 
 // User roles and statuses constants
 const userRoles = ['user', 'admin'];
 const userStatuses = ['active', 'inactive', 'suspended'];
-import { formatCurrency } from '../../utils/currency';
 
 const MotionCard = motion(Card);
 
@@ -234,14 +234,14 @@ const Users = () => {
     }
 
     setUsers(updatedUsers);
-    saveUsers(updatedUsers);
+    localStorage.setItem('users', JSON.stringify(updatedUsers));
     handleCloseDialog();
   };
 
   const handleDelete = () => {
     const updatedUsers = users.filter((user) => user.id !== selectedUser.id);
     setUsers(updatedUsers);
-    saveUsers(updatedUsers);
+    localStorage.setItem('users', JSON.stringify(updatedUsers));
     setSnackbar({
       open: true,
       message: 'User deleted successfully!',

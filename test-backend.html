@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop-E Backend Tester</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+        }
+        .test-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-item {
+            margin: 15px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-item h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .loading {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status-pending { background: #ffc107; color: white; }
+        .status-success { background: #28a745; color: white; }
+        .status-failed { background: #dc3545; color: white; }
+        .instructions {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .critical {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🛒 Shop-E Backend Status Checker</h1>
+    
+    <div class="critical">
+        ⚠️ <strong>CRITICAL:</strong> If you see "ECONNREFUSED 127.0.0.1:27017" errors below, it means your environment variables are NOT set on Vercel!
+        <br><br>
+        Follow the instructions in <strong>STEP_BY_STEP_FIX.txt</strong> to add the MONGODB_URI and other environment variables.
+    </div>
+
+    <div class="instructions">
+        <strong>📋 Instructions:</strong>
+        <ol>
+            <li>Click "Test All" to check all endpoints at once</li>
+            <li>Or click individual "Test" buttons to check one endpoint</li>
+            <li>Green = Success ✅, Red = Error ❌</li>
+            <li>If you see 503 errors, you need to add environment variables on Vercel!</li>
+        </ol>
+    </div>
+
+    <button onclick="testAll()" style="font-size: 16px; padding: 15px 30px;">🚀 Test All Endpoints</button>
+
+    <div class="test-container">
+        <h2>Backend Tests</h2>
+
+        <!-- Health Check -->
+        <div class="test-item">
+            <h3>1. Health Check <span id="status-health" class="status status-pending">Pending</span></h3>
+            <p><strong>Endpoint:</strong> GET /api/health</p>
+            <p><strong>Purpose:</strong> Check if API is running</p>
+            <button onclick="testEndpoint('health', 'https://shop-e.vercel.app/api/health')">Test</button>
+            <div id="result-health"></div>
+        </div>
+
+        <!-- Database Status -->
+        <div class="test-item">
+            <h3>2. Database Status <span id="status-db" class="status status-pending">Pending</span></h3>
+            <p><strong>Endpoint:</strong> GET /api/setup/status</p>
+            <p><strong>Purpose:</strong> Check MongoDB connection</p>
+            <button onclick="testEndpoint('db', 'https://shop-e.vercel.app/api/setup/status')">Test</button>
+            <div id="result-db"></div>
+        </div>
+
+        <!-- Products -->
+        <div class="test-item">
+            <h3>3. Products API <span id="status-products" class="status status-pending">Pending</span></h3>
+            <p><strong>Endpoint:</strong> GET /api/products</p>
+            <p><strong>Purpose:</strong> Fetch products from database</p>
+            <button onclick="testEndpoint('products', 'https://shop-e.vercel.app/api/products')">Test</button>
+            <div id="result-products"></div>
+        </div>
+
+        <!-- Categories -->
+        <div class="test-item">
+            <h3>4. Categories API <span id="status-categories" class="status status-pending">Pending</span></h3>
+            <p><strong>Endpoint:</strong> GET /api/categories</p>
+            <p><strong>Purpose:</strong> Fetch categories from database</p>
+            <button onclick="testEndpoint('categories', 'https://shop-e.vercel.app/api/categories')">Test</button>
+            <div id="result-categories"></div>
+        </div>
+
+        <!-- Create Admin -->
+        <div class="test-item">
+            <h3>5. Create Admin User <span id="status-admin" class="status status-pending">Pending</span></h3>
+            <p><strong>Endpoint:</strong> POST /api/setup/create-admin</p>
+            <p><strong>Purpose:</strong> Create admin user (admin@shop-e.com / admin123)</p>
+            <button onclick="testEndpoint('admin', 'https://shop-e.vercel.app/api/setup/create-admin', 'POST')">Test</button>
+            <div id="result-admin"></div>
+        </div>
+    </div>
+
+    <script>
+        async function testEndpoint(id, url, method = 'GET') {
+            const resultDiv = document.getElementById(`result-${id}`);
+            const statusSpan = document.getElementById(`status-${id}`);
+            
+            resultDiv.innerHTML = '<div class="result loading">Testing...</div>';
+            statusSpan.className = 'status status-pending';
+            statusSpan.textContent = 'Testing...';
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                const isSuccess = response.ok && data.success !== false;
+
+                statusSpan.className = isSuccess ? 'status status-success' : 'status status-failed';
+                statusSpan.textContent = isSuccess ? '✅ Success' : '❌ Failed';
+
+                resultDiv.innerHTML = `
+                    <div class="result ${isSuccess ? 'success' : 'error'}">
+                        <strong>Status:</strong> ${response.status} ${response.statusText}
+                        <br>
+                        <strong>Response:</strong>
+                        ${JSON.stringify(data, null, 2)}
+                    </div>
+                `;
+
+                // Check for specific errors
+                if (data.error && data.error.includes('127.0.0.1:27017')) {
+                    resultDiv.innerHTML += `
+                        <div class="result error" style="margin-top: 10px;">
+                            <strong>🚨 CRITICAL ERROR DETECTED!</strong><br>
+                            The backend is trying to connect to localhost MongoDB (127.0.0.1:27017).<br>
+                            This means <strong>MONGODB_URI environment variable is NOT set on Vercel!</strong><br><br>
+                            <strong>ACTION REQUIRED:</strong><br>
+                            1. Go to Vercel Dashboard → Your Backend Project → Settings → Environment Variables<br>
+                            2. Add MONGODB_URI with your MongoDB Atlas connection string<br>
+                            3. Redeploy your backend<br><br>
+                            See <strong>STEP_BY_STEP_FIX.txt</strong> for detailed instructions.
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                statusSpan.className = 'status status-failed';
+                statusSpan.textContent = '❌ Failed';
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>Error:</strong> ${error.message}
+                        <br><br>
+                        This usually means:
+                        <ul>
+                            <li>The backend is not deployed</li>
+                            <li>Network connectivity issues</li>
+                            <li>CORS configuration problems</li>
+                        </ul>
+                    </div>
+                `;
+            }
+        }
+
+        async function testAll() {
+            await testEndpoint('health', 'https://shop-e.vercel.app/api/health');
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testEndpoint('db', 'https://shop-e.vercel.app/api/setup/status');
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testEndpoint('products', 'https://shop-e.vercel.app/api/products');
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testEndpoint('categories', 'https://shop-e.vercel.app/api/categories');
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Don't auto-test admin creation as it might already exist
+            console.log('Admin creation test skipped. Click "Test" button manually if needed.');
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            console.log('Page loaded. Click "Test All" to check all endpoints.');
+        });
+    </script>
+</body>
+</html>
+

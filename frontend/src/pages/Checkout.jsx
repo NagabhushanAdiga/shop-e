@@ -122,7 +122,7 @@ const Checkout = () => {
     setPaymentInfo(paymentData);
     
     // Create order
-    const orders = loadOrders();
+    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
     const newOrder = {
       id: Math.max(...orders.map(o => o.id), 0) + 1,
       orderNumber: `ORD-${new Date().getFullYear()}-${String(orders.length + 1).padStart(3, '0')}`,
@@ -160,7 +160,7 @@ const Checkout = () => {
     
     // Save order
     const updatedOrders = [...orders, newOrder];
-    saveOrders(updatedOrders);
+    localStorage.setItem('orders', JSON.stringify(updatedOrders));
     
     // Send notification to admin
     addNotification({

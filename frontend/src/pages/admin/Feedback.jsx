@@ -41,6 +41,7 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { feedbackService } from '../../services/feedbackService';
+import { useAuth } from '../../context/AuthContext';
 
 // Feedback statuses constant
 const feedbackStatuses = [
@@ -49,7 +50,6 @@ const feedbackStatuses = [
   { value: 'resolved', label: 'Resolved', color: 'success' },
   { value: 'closed', label: 'Closed', color: 'default' }
 ];
-import { useAuth } from '../../context/AuthContext';
 
 const MotionCard = motion(Card);
 
@@ -150,7 +150,7 @@ const Feedback = () => {
     );
 
     setFeedbacks(updatedFeedbacks);
-    saveFeedback(updatedFeedbacks);
+    localStorage.setItem('feedback', JSON.stringify(updatedFeedbacks));
 
     setSnackbar({
       open: true,
@@ -169,7 +169,7 @@ const Feedback = () => {
     );
 
     setFeedbacks(updatedFeedbacks);
-    saveFeedback(updatedFeedbacks);
+    localStorage.setItem('feedback', JSON.stringify(updatedFeedbacks));
 
     setSnackbar({
       open: true,

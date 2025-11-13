@@ -12,6 +12,7 @@
       "dest": "server.js"
     }
   ],
+  "installCommand": "npm install --legacy-peer-deps",
   "env": {
     "NODE_ENV": "production"
   }
