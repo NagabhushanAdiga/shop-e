@@ -6,7 +6,7 @@
 
 export const API_CONFIG = {
   // Base URL for API
-  BASE_URL: process.env.REACT_APP_API_URL || 'https://shop-e.vercel.app/api',
+  BASE_URL: process.env.REACT_APP_API_URL || 'https://shop-e-server.vercel.app/api',
   
   // Timeout for requests (in milliseconds)
   TIMEOUT: 10000,
