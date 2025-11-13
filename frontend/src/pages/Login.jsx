@@ -125,16 +125,6 @@ const Login = () => {
               </Typography>
             </Box>
 
-            {/* Demo Credentials Info */}
-            <Alert severity="info" sx={{ mb: 3 }}>
-              <Typography variant="body2" gutterBottom>
-                <strong>Admin Demo:</strong> admin@shop-e.com / admin123
-              </Typography>
-              <Typography variant="body2">
-                <strong>User Demo:</strong> Use any email / any password
-              </Typography>
-            </Alert>
-
             {locationMessage && (
               <Alert severity="info" sx={{ mb: 3 }}>
                 {locationMessage}
