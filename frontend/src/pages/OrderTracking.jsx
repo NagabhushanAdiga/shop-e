@@ -31,8 +31,10 @@ import {
   Pending,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import { loadOrders } from '../data/orders';
+import { orderService } from '../services/orderService';
 import { formatCurrency } from '../utils/currency';
+import { useDynamicTitle } from '../hooks/useDynamicTitle';
+import Loader from '../components/Loader';
 
 const MotionCard = motion(Card);
 
@@ -43,6 +45,10 @@ const OrderTracking = () => {
   const [orderNumber, setOrderNumber] = useState('');
   const [order, setOrder] = useState(null);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Update browser tab title dynamically
+  useDynamicTitle('Track Order');
 
   // Auto-fill last order number
   React.useEffect(() => {
@@ -52,7 +58,7 @@ const OrderTracking = () => {
     }
   }, []);
 
-  const handleTrack = () => {
+  const handleTrack = async () => {
     setError('');
     setOrder(null);
 
@@ -61,17 +67,31 @@ const OrderTracking = () => {
       return;
     }
 
-    const orders = loadOrders();
-    const foundOrder = orders.find(
-      (o) => o.orderNumber.toLowerCase() === orderNumber.trim().toLowerCase()
-    );
+    setLoading(true);
+    
+    try {
+      // Fetch user's orders and find the one matching the order number
+      const result = await orderService.getMyOrders();
+      
+      if (result.success && result.orders) {
+        const foundOrder = result.orders.find(
+          (o) => o.orderNumber.toLowerCase() === orderNumber.trim().toLowerCase()
+        );
 
-    if (!foundOrder) {
-      setError('Order not found. Please check your order number.');
-      return;
+        if (foundOrder) {
+          setOrder(foundOrder);
+        } else {
+          setError('Order not found. Please check your order number.');
+        }
+      } else {
+        setError('Unable to fetch orders. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error tracking order:', err);
+      setError('Unable to track order. Please try again.');
+    } finally {
+      setLoading(false);
     }
-
-    setOrder(foundOrder);
   };
 
   const getStatusStep = (status) => {
@@ -141,14 +161,15 @@ const OrderTracking = () => {
               <Button
                 variant="contained"
                 size="large"
-                startIcon={<Search />}
+                startIcon={!loading && <Search />}
                 onClick={handleTrack}
+                disabled={loading}
                 sx={{
                   minWidth: { xs: '100%', sm: 150 },
                   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 }}
               >
-                Track
+                {loading ? 'Tracking...' : 'Track'}
               </Button>
             </Box>
           </CardContent>
@@ -274,12 +295,16 @@ const OrderTracking = () => {
                     Shipping Address
                   </Typography>
                   <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
-                    <Typography variant="body2">{order.shippingAddress.street}</Typography>
                     <Typography variant="body2">
-                      {order.shippingAddress.city}, {order.shippingAddress.state}{' '}
-                      {order.shippingAddress.zipCode}
+                      {order.customer?.address?.street || order.shippingAddress?.street}
                     </Typography>
-                    <Typography variant="body2">{order.shippingAddress.country}</Typography>
+                    <Typography variant="body2">
+                      {order.customer?.address?.city || order.shippingAddress?.city}, {order.customer?.address?.state || order.shippingAddress?.state}{' '}
+                      {order.customer?.address?.zipCode || order.shippingAddress?.zipCode}
+                    </Typography>
+                    <Typography variant="body2">
+                      {order.customer?.address?.country || order.shippingAddress?.country}
+                    </Typography>
                   </Paper>
                 </Grid>
               </Grid>
@@ -315,7 +340,7 @@ const OrderTracking = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="body2">Shipping:</Typography>
                   <Typography variant="body2" fontWeight={600}>
-                    {formatCurrency(order.shipping)}
+                    {formatCurrency(order.shippingFee || order.shipping || 0)}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
