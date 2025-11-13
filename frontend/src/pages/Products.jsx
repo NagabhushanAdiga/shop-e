@@ -20,7 +20,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { Search, ShoppingCart, FilterList } from '@mui/icons-material';
+import { Search, ShoppingCart, FilterList, Warning } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
@@ -28,6 +28,7 @@ import { useAuth } from '../context/AuthContext';
 import { productService } from '../services/productService';
 import { formatCurrency } from '../utils/currency';
 import Loader from '../components/Loader';
+import { useDynamicTitle } from '../hooks/useDynamicTitle';
 
 const MotionCard = motion(Card);
 
@@ -43,6 +44,9 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('name');
   const [loading, setLoading] = useState(true);
+
+  // Update browser tab title dynamically
+  useDynamicTitle('Products');
 
   // Redirect admin users to admin dashboard
   useEffect(() => {
@@ -242,11 +246,17 @@ const Products = () => {
                       label="Low Stock"
                       color="warning"
                       size="small"
+                      icon={<Warning />}
                       sx={{
                         position: 'absolute',
                         top: 10,
                         right: 10,
                         zIndex: 1,
+                        fontWeight: 600,
+                        '& .MuiChip-icon': {
+                          marginLeft: '-2px',
+                          marginRight: '4px',
+                        },
                       }}
                     />
                   )}

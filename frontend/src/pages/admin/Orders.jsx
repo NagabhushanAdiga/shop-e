@@ -48,6 +48,7 @@ import { motion } from 'framer-motion';
 import { orderService } from '../../services/orderService';
 import { formatCurrency } from '../../utils/currency';
 import Loader from '../../components/Loader';
+import { useDynamicTitle } from '../../hooks/useDynamicTitle';
 
 // Order status constants
 const orderStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
@@ -71,6 +72,9 @@ const Orders = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Update browser tab title dynamically
+  useDynamicTitle('Orders');
 
   const fetchOrders = async () => {
     try {

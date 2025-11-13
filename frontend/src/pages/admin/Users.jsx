@@ -37,6 +37,7 @@ import { Add, Edit, Delete, Block, CheckCircle, Search, Visibility, VisibilityOf
 import { motion } from 'framer-motion';
 import { userService } from '../../services/userService';
 import { formatCurrency } from '../../utils/currency';
+import { useDynamicTitle } from '../../hooks/useDynamicTitle';
 
 // User roles and statuses constants
 const userRoles = ['user', 'admin'];
@@ -74,6 +75,9 @@ const Users = () => {
   
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Update browser tab title dynamically
+  useDynamicTitle('Users Management');
 
   const fetchUsers = async () => {
     try {
@@ -481,6 +485,12 @@ const Users = () => {
                         label={user.role}
                         size="small"
                         color={user.role === 'admin' ? 'primary' : 'default'}
+                        icon={user.role === 'admin' ? <AdminPanelSettings /> : <Person />}
+                        sx={{
+                          '& .MuiChip-icon': {
+                            marginLeft: '4px',
+                          },
+                        }}
                       />
                     </TableCell>
                     <TableCell>
@@ -587,11 +597,25 @@ const Users = () => {
                           label={user.role}
                           size="small"
                           color={user.role === 'admin' ? 'primary' : 'default'}
+                          icon={user.role === 'admin' ? <AdminPanelSettings /> : <Person />}
+                          sx={{
+                            '& .MuiChip-icon': {
+                              marginLeft: '-2px',
+                              marginRight: '6px',
+                            },
+                          }}
                         />
                         <Chip
                           label={user.status}
                           size="small"
                           color={user.status === 'active' ? 'success' : 'default'}
+                          icon={user.status === 'active' ? <CheckCircle /> : <Block />}
+                          sx={{
+                            '& .MuiChip-icon': {
+                              marginLeft: '-2px',
+                              marginRight: '6px',
+                            },
+                          }}
                         />
                       </Box>
                       <Box sx={{ mt: 1 }}>

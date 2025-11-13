@@ -49,6 +49,7 @@ import { formatCurrency } from '../../utils/currency';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { useDynamicTitle } from '../../hooks/useDynamicTitle';
 
 const MotionCard = motion(Card);
 
@@ -62,6 +63,9 @@ const Reports = () => {
   const [reportType, setReportType] = useState('overview');
   const [dateRange, setDateRange] = useState('30days');
   const [exportMenuAnchor, setExportMenuAnchor] = useState(null);
+
+  // Update browser tab title dynamically
+  useDynamicTitle('Reports & Analytics');
 
   useEffect(() => {
     const fetchReportData = async () => {

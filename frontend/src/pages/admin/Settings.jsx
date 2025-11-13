@@ -22,6 +22,7 @@ import { motion } from 'framer-motion';
 import { useThemeSettings } from '../../context/ThemeContext';
 import API from '../../services/api';
 import { storeSettingService } from '../../services/storeSettingService';
+import { useDynamicTitle } from '../../hooks/useDynamicTitle';
 
 const MotionCard = motion(Card);
 
@@ -57,16 +58,41 @@ const Settings = () => {
     },
   });
 
+  const [logoPreview, setLogoPreview] = useState('');
+  const [faviconPreview, setFaviconPreview] = useState('');
+
+  // Update browser tab title dynamically
+  useDynamicTitle('Settings');
+
   useEffect(() => {
     // Fetch store settings
     const fetchStoreSettings = async () => {
       const result = await storeSettingService.getSettings();
       if (result.success && result.data) {
         setStoreSettings(result.data);
+        setLogoPreview(result.data.logo);
+        setFaviconPreview(result.data.favicon);
       }
     };
     fetchStoreSettings();
   }, []);
+
+  const handleFileUpload = (field, file) => {
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result;
+        if (field === 'logo') {
+          setLogoPreview(base64String);
+          handleStoreSettingChange('logo', base64String);
+        } else if (field === 'favicon') {
+          setFaviconPreview(base64String);
+          handleStoreSettingChange('favicon', base64String);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleStoreSettingChange = (field, value) => {
     if (field.includes('.')) {
@@ -299,24 +325,114 @@ const Settings = () => {
 
                 {/* Logo & Favicon */}
                 <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Logo URL"
-                    value={storeSettings.logo}
-                    onChange={(e) => handleStoreSettingChange('logo', e.target.value)}
-                    placeholder="https://example.com/logo.png"
-                    helperText="URL to your store logo image"
-                  />
+                  <Box>
+                    <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                      Store Logo
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                      Upload logo or paste image URL (recommended: 200x60px)
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                      <Box sx={{ flex: 1 }}>
+                        <TextField
+                          fullWidth
+                          label="Logo URL"
+                          value={storeSettings.logo && !storeSettings.logo.startsWith('data:') ? storeSettings.logo : ''}
+                          onChange={(e) => handleStoreSettingChange('logo', e.target.value)}
+                          placeholder="https://example.com/logo.png"
+                          size="small"
+                          sx={{ mb: 1 }}
+                        />
+                        <Button
+                          component="label"
+                          variant="outlined"
+                          startIcon={<Storage />}
+                          fullWidth
+                          size="small"
+                        >
+                          Upload from Device
+                          <input
+                            type="file"
+                            hidden
+                            accept="image/*"
+                            onChange={(e) => handleFileUpload('logo', e.target.files[0])}
+                          />
+                        </Button>
+                      </Box>
+                      {logoPreview && (
+                        <Box
+                          component="img"
+                          src={logoPreview}
+                          alt="Logo Preview"
+                          sx={{
+                            width: 80,
+                            height: 80,
+                            objectFit: 'contain',
+                            border: '2px solid',
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            p: 1,
+                            bgcolor: 'background.paper',
+                          }}
+                        />
+                      )}
+                    </Box>
+                  </Box>
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Favicon URL"
-                    value={storeSettings.favicon}
-                    onChange={(e) => handleStoreSettingChange('favicon', e.target.value)}
-                    placeholder="https://example.com/favicon.ico"
-                    helperText="Small icon shown in browser tab"
-                  />
+                  <Box>
+                    <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                      Favicon
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                      Upload favicon or paste image URL (recommended: 32x32px, square)
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                      <Box sx={{ flex: 1 }}>
+                        <TextField
+                          fullWidth
+                          label="Favicon URL"
+                          value={storeSettings.favicon && !storeSettings.favicon.startsWith('data:') ? storeSettings.favicon : ''}
+                          onChange={(e) => handleStoreSettingChange('favicon', e.target.value)}
+                          placeholder="https://example.com/favicon.ico"
+                          size="small"
+                          sx={{ mb: 1 }}
+                        />
+                        <Button
+                          component="label"
+                          variant="outlined"
+                          startIcon={<Storage />}
+                          fullWidth
+                          size="small"
+                        >
+                          Upload from Device
+                          <input
+                            type="file"
+                            hidden
+                            accept="image/*"
+                            onChange={(e) => handleFileUpload('favicon', e.target.files[0])}
+                          />
+                        </Button>
+                      </Box>
+                      {faviconPreview && (
+                        <Box
+                          component="img"
+                          src={faviconPreview}
+                          alt="Favicon Preview"
+                          sx={{
+                            width: 60,
+                            height: 60,
+                            objectFit: 'contain',
+                            border: '2px solid',
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            p: 1,
+                            bgcolor: 'background.paper',
+                          }}
+                        />
+                      )}
+                    </Box>
+                  </Box>
                 </Grid>
 
                 {/* Brand Colors */}

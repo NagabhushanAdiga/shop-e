@@ -30,9 +30,10 @@ import {
   TablePagination,
   InputAdornment,
 } from '@mui/material';
-import { Add, Edit, Delete, Category as CategoryIcon, Search } from '@mui/icons-material';
+import { Add, Edit, Delete, Category as CategoryIcon, Search, CheckCircle, Block, Inventory, Tag } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { categoryService } from '../../services/categoryService';
+import { useDynamicTitle } from '../../hooks/useDynamicTitle';
 
 const MotionCard = motion(Card);
 
@@ -59,6 +60,9 @@ const Categories = () => {
     image: '',
     active: true,
   });
+
+  // Update browser tab title dynamically
+  useDynamicTitle('Categories');
 
   const fetchCategories = async () => {
     try {
@@ -330,16 +334,46 @@ const Categories = () => {
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Chip label={category.slug} size="small" />
+                      <Chip 
+                        label={category.slug} 
+                        size="small"
+                        icon={<Tag />}
+                        sx={{
+                          '& .MuiChip-icon': {
+                            marginLeft: '-2px',
+                            marginRight: '4px',
+                          },
+                        }}
+                      />
                     </TableCell>
                     <TableCell align="center">
-                      <Chip label={category.productCount} size="small" color="primary" />
+                      <Chip 
+                        label={category.productCount} 
+                        size="small" 
+                        color="primary"
+                        icon={<Inventory />}
+                        sx={{
+                          fontWeight: 600,
+                          '& .MuiChip-icon': {
+                            marginLeft: '-2px',
+                            marginRight: '4px',
+                          },
+                        }}
+                      />
                     </TableCell>
                     <TableCell align="center">
                       <Chip
                         label={category.active ? 'Active' : 'Inactive'}
                         size="small"
                         color={category.active ? 'success' : 'default'}
+                        icon={category.active ? <CheckCircle /> : <Block />}
+                        sx={{
+                          fontWeight: 600,
+                          '& .MuiChip-icon': {
+                            marginLeft: '-2px',
+                            marginRight: '4px',
+                          },
+                        }}
                       />
                     </TableCell>
                     <TableCell align="right">
@@ -405,16 +439,42 @@ const Categories = () => {
                         {category.description}
                       </Typography>
                       <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                        <Chip label={category.slug} size="small" />
+                        <Chip 
+                          label={category.slug} 
+                          size="small"
+                          icon={<Tag />}
+                          sx={{
+                            '& .MuiChip-icon': {
+                              marginLeft: '-2px',
+                              marginRight: '4px',
+                            },
+                          }}
+                        />
                         <Chip
                           label={`${category.productCount} products`}
                           size="small"
                           color="primary"
+                          icon={<Inventory />}
+                          sx={{
+                            fontWeight: 600,
+                            '& .MuiChip-icon': {
+                              marginLeft: '-2px',
+                              marginRight: '4px',
+                            },
+                          }}
                         />
                         <Chip
                           label={category.active ? 'Active' : 'Inactive'}
                           size="small"
                           color={category.active ? 'success' : 'default'}
+                          icon={category.active ? <CheckCircle /> : <Block />}
+                          sx={{
+                            fontWeight: 600,
+                            '& .MuiChip-icon': {
+                              marginLeft: '-2px',
+                              marginRight: '4px',
+                            },
+                          }}
                         />
                       </Box>
                       <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>

@@ -47,6 +47,9 @@ import {
   Image as ImageIcon,
   Search,
   FilterList,
+  CheckCircle,
+  Warning,
+  Star,
 } from '@mui/icons-material';
 import { formatCurrency } from '../utils/currency';
 import { motion } from 'framer-motion';
@@ -595,12 +598,32 @@ const AdminDashboard = () => {
                             label={product.stock}
                             size="small"
                             color={product.stock < 20 ? 'warning' : 'success'}
+                            icon={product.stock < 20 ? <Warning /> : <CheckCircle />}
+                            sx={{
+                              fontWeight: 600,
+                              '& .MuiChip-icon': {
+                                marginLeft: '-2px',
+                                marginRight: '4px',
+                              },
+                            }}
                           />
                         </TableCell>
                         <TableCell align="right">{product.rating}</TableCell>
                         <TableCell>
                           {product.featured && (
-                            <Chip label="Featured" size="small" color="primary" />
+                            <Chip 
+                              label="Featured" 
+                              size="small" 
+                              color="primary"
+                              icon={<Star />}
+                              sx={{
+                                fontWeight: 600,
+                                '& .MuiChip-icon': {
+                                  marginLeft: '-2px',
+                                  marginRight: '4px',
+                                },
+                              }}
+                            />
                           )}
                         </TableCell>
                         <TableCell align="right">

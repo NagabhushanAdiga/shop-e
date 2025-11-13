@@ -47,6 +47,7 @@ import { useAuth } from '../context/AuthContext';
 import { productService } from '../services/productService';
 import { formatCurrency } from '../utils/currency';
 import Loader from '../components/Loader';
+import { useDynamicTitle } from '../hooks/useDynamicTitle';
 
 const MotionBox = motion(Box);
 const MotionCard = motion(Card);
@@ -62,6 +63,9 @@ const Home = () => {
   const [products, setProducts] = useState([]);
   const [activeSlide, setActiveSlide] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  // Update browser tab title dynamically
+  useDynamicTitle(); // No page title = uses store name + tagline
 
   // Redirect admin users to admin dashboard
   useEffect(() => {

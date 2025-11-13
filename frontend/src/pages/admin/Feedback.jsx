@@ -42,6 +42,7 @@ import {
 import { motion } from 'framer-motion';
 import { feedbackService } from '../../services/feedbackService';
 import { useAuth } from '../../context/AuthContext';
+import { useDynamicTitle } from '../../hooks/useDynamicTitle';
 
 // Feedback statuses constant
 const feedbackStatuses = [
@@ -67,6 +68,9 @@ const Feedback = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  // Update browser tab title dynamically
+  useDynamicTitle('User Feedback');
 
   const fetchFeedback = async () => {
     try {

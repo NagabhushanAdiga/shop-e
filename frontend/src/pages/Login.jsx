@@ -19,6 +19,7 @@ import { Visibility, VisibilityOff, Login as LoginIcon } from '@mui/icons-materi
 import { motion } from 'framer-motion';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useDynamicTitle } from '../hooks/useDynamicTitle';
 
 const MotionCard = motion(Card);
 
@@ -36,6 +37,9 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Update browser tab title dynamically
+  useDynamicTitle('Login');
 
   // Get message from location state (if redirected from cart/checkout)
   const locationMessage = location.state?.message;

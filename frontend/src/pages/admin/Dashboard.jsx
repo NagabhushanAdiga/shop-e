@@ -35,6 +35,7 @@ import { orderService } from '../../services/orderService';
 import { userService } from '../../services/userService';
 import { formatCurrency } from '../../utils/currency';
 import Loader from '../../components/Loader';
+import { useDynamicTitle } from '../../hooks/useDynamicTitle';
 
 const MotionCard = motion(Card);
 
@@ -92,6 +93,9 @@ const Dashboard = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  // Update browser tab title dynamically
+  useDynamicTitle('Admin Dashboard');
 
   useEffect(() => {
     const fetchDashboardData = async () => {

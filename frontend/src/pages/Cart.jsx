@@ -24,6 +24,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/currency';
+import { useDynamicTitle } from '../hooks/useDynamicTitle';
 
 const MotionCard = motion(Card);
 
@@ -38,6 +39,9 @@ const Cart = () => {
 
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
+
+  // Update browser tab title dynamically
+  useDynamicTitle('Shopping Cart');
 
   const handleClearCart = () => {
     clearCart();
@@ -150,7 +154,7 @@ const Cart = () => {
                           {item.name}
                         </Typography>
                         <Typography variant="body2" color="text.secondary" gutterBottom>
-                          {item.category}
+                          {typeof item.category === 'object' ? item.category.name : item.category}
                         </Typography>
                         <Typography variant="h6" color="primary" sx={{ mt: 1 }}>
                           {formatCurrency(item.price)}
