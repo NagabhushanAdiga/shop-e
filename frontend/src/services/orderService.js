@@ -43,7 +43,7 @@ export const orderService = {
   create: async (orderData) => {
     try {
       const response = await API.post('/orders', orderData);
-      return { success: true, order: response.data.order };
+      return { success: true, data: response.data };
     } catch (error) {
       return { success: false, message: error.message };
     }

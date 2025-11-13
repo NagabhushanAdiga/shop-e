@@ -43,8 +43,10 @@ import {
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { loadOrders } from '../data/orders';
+import { orderService } from '../services/orderService';
 import { formatCurrency } from '../utils/currency';
+import { useDynamicTitle } from '../hooks/useDynamicTitle';
+import Loader from '../components/Loader';
 
 const MotionCard = motion(Card);
 
@@ -59,6 +61,7 @@ const UserProfile = () => {
   const [orderDetailDialog, setOrderDetailDialog] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [userOrders, setUserOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
@@ -70,18 +73,31 @@ const UserProfile = () => {
     zipCode: '',
   });
 
+  // Update browser tab title dynamically
+  useDynamicTitle('My Profile');
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
 
-    // Load user's orders
-    const allOrders = loadOrders();
-    const myOrders = allOrders.filter(order => 
-      order.customer.email.toLowerCase() === user?.email.toLowerCase()
-    );
-    setUserOrders(myOrders);
+    // Fetch user's orders from API
+    const fetchUserOrders = async () => {
+      try {
+        setLoading(true);
+        const result = await orderService.getMyOrders();
+        if (result.success && result.orders) {
+          setUserOrders(result.orders);
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserOrders();
   }, [isAuthenticated, navigate, user]);
 
   const handleTabChange = (event, newValue) => {
@@ -147,6 +163,10 @@ const UserProfile = () => {
 
   const totalSpent = userOrders.reduce((sum, order) => sum + order.total, 0);
   const completedOrders = userOrders.filter(o => o.status === 'delivered').length;
+
+  if (loading) {
+    return <Loader message="Loading your profile..." fullScreen={true} />;
+  }
 
   return (
     <Box sx={{ minHeight: '80vh', bgcolor: 'background.default', py: 3, px: { xs: 2, sm: 3, md: 4 } }}>

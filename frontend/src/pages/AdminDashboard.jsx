@@ -53,7 +53,8 @@ import {
 } from '@mui/icons-material';
 import { formatCurrency } from '../utils/currency';
 import { motion } from 'framer-motion';
-import { loadProducts, saveProducts, initialProducts } from '../data/products';
+import { productService } from '../services/productService';
+import { useDynamicTitle } from '../hooks/useDynamicTitle';
 
 const MotionCard = motion(Card);
 
@@ -68,6 +69,7 @@ const AdminDashboard = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
+  const [loading, setLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     id: null,
@@ -83,8 +85,25 @@ const AdminDashboard = () => {
   
   const [imagePreview, setImagePreview] = useState(null);
 
+  // Update browser tab title dynamically
+  useDynamicTitle('Products Management');
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const result = await productService.getAll();
+      if (result.success && result.data) {
+        setProducts(result.data.products || result.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    setProducts(loadProducts());
+    fetchProducts();
   }, []);
 
   const categories = ['Electronics', 'Fashion', 'Home', 'Sports', 'Accessories'];
@@ -183,7 +202,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleSaveProduct = () => {
+  const handleSaveProduct = async () => {
     if (!formData.name || !formData.price || !formData.category || !formData.description) {
       setSnackbar({
         open: true,
@@ -214,44 +233,58 @@ const AdminDashboard = () => {
       return;
     }
 
-    let updatedProducts;
+    setLoading(true);
 
-    if (selectedProduct) {
-      // Edit existing product
-      updatedProducts = products.map((p) =>
-        p.id === selectedProduct.id
-          ? {
-            ...formData,
-            id: selectedProduct.id,
-            price,
-            stock,
-          }
-          : p
-      );
-      setSnackbar({
-        open: true,
-        message: 'Product updated successfully!',
-        severity: 'success',
-      });
-    } else {
-      // Add new product
-      const newProduct = {
-        ...formData,
-        id: Math.max(...products.map((p) => p.id)) + 1,
+    try {
+      const productData = {
+        name: formData.name,
         price,
+        category: formData.category,
+        description: formData.description,
+        image: formData.image || 'https://via.placeholder.com/300',
+        rating: Number(formData.rating) || 4.0,
         stock,
+        featured: formData.featured || false,
       };
-      updatedProducts = [...products, newProduct];
+
+      if (selectedProduct) {
+        // Edit existing product
+        const result = await productService.update(selectedProduct.id || selectedProduct._id, productData);
+        if (result.success) {
+          setSnackbar({
+            open: true,
+            message: 'Product updated successfully!',
+            severity: 'success',
+          });
+          await fetchProducts(); // Refresh product list
+        } else {
+          throw new Error(result.message || 'Failed to update product');
+        }
+      } else {
+        // Add new product
+        const result = await productService.create(productData);
+        if (result.success) {
+          setSnackbar({
+            open: true,
+            message: 'Product added successfully!',
+            severity: 'success',
+          });
+          await fetchProducts(); // Refresh product list
+        } else {
+          throw new Error(result.message || 'Failed to add product');
+        }
+      }
+
+      handleCloseEditDialog();
+    } catch (error) {
       setSnackbar({
         open: true,
-        message: 'Product added successfully!',
-        severity: 'success',
+        message: error.message || 'Operation failed',
+        severity: 'error',
       });
+    } finally {
+      setLoading(false);
     }
-
-    setProducts(updatedProducts);
-    saveProducts(updatedProducts);
-    handleCloseEditDialog();
   };
 
   const handleOpenDeleteDialog = (product) => {
@@ -264,24 +297,40 @@ const AdminDashboard = () => {
     setSelectedProduct(null);
   };
 
-  const handleDeleteProduct = () => {
-    const updatedProducts = products.filter((p) => p.id !== selectedProduct.id);
-    setProducts(updatedProducts);
-    saveProducts(updatedProducts);
-    setSnackbar({
-      open: true,
-      message: 'Product deleted successfully!',
-      severity: 'success',
-    });
-    handleCloseDeleteDialog();
+  const handleDeleteProduct = async () => {
+    setLoading(true);
+    try {
+      const result = await productService.delete(selectedProduct.id || selectedProduct._id);
+      if (result.success) {
+        setSnackbar({
+          open: true,
+          message: 'Product deleted successfully!',
+          severity: 'success',
+        });
+        await fetchProducts(); // Refresh product list
+      } else {
+        throw new Error(result.message || 'Failed to delete product');
+      }
+      handleCloseDeleteDialog();
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error.message || 'Failed to delete product',
+        severity: 'error',
+      });
+    } finally {
+      setLoading(false);
+      handleCloseDeleteDialog();
+    }
   };
 
-  const handleResetProducts = () => {
-    setProducts(initialProducts);
-    saveProducts(initialProducts);
+  const handleResetProducts = async () => {
+    // This would call bulk delete endpoint and re-seed
+    // For now, just refresh the products
+    await fetchProducts();
     setSnackbar({
       open: true,
-      message: 'Products reset to default!',
+      message: 'Products refreshed!',
       severity: 'info',
     });
   };

@@ -31,6 +31,7 @@ import { useNotifications } from '../context/NotificationContext';
 import { orderService } from '../services/orderService';
 import PaymentMethods from '../components/PaymentMethods';
 import { formatCurrency } from '../utils/currency';
+import { useDynamicTitle } from '../hooks/useDynamicTitle';
 
 const MotionCard = motion(Card);
 
@@ -69,6 +70,9 @@ const Checkout = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [paymentError, setPaymentError] = useState('');
   const [paymentInfo, setPaymentInfo] = useState(null);
+
+  // Update browser tab title dynamically
+  useDynamicTitle('Checkout');
 
   const steps = ['Shipping Information', 'Payment Method', 'Order Confirmation'];
 
@@ -118,22 +122,18 @@ const Checkout = () => {
     setPaymentError('');
   };
 
-  const handlePaymentSuccess = (paymentData) => {
+  const handlePaymentSuccess = async (paymentData) => {
     setPaymentInfo(paymentData);
     
-    // Create order
-    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-    const newOrder = {
-      id: Math.max(...orders.map(o => o.id), 0) + 1,
-      orderNumber: `ORD-${new Date().getFullYear()}-${String(orders.length + 1).padStart(3, '0')}`,
-      userId: user?.id || null,
+    // Create order data
+    const orderData = {
       customer: {
         name: `${formData.firstName} ${formData.lastName}`,
         email: formData.email,
         phone: formData.phone,
       },
       items: cartItems.map(item => ({
-        productId: item.id,
+        productId: item.id || item._id,
         name: item.name,
         quantity: item.quantity,
         price: item.price,
@@ -154,28 +154,55 @@ const Checkout = () => {
         zipCode: formData.zipCode,
         country: 'India',
       },
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     };
     
-    // Save order
-    const updatedOrders = [...orders, newOrder];
-    localStorage.setItem('orders', JSON.stringify(updatedOrders));
-    
-    // Send notification to admin
-    addNotification({
-      type: 'order',
-      title: 'New Order Received!',
-      message: `Order ${newOrder.orderNumber} from ${newOrder.customer.name} - ${formatCurrency(total)}`,
-      link: '/admin/orders',
-    });
-    
-    // Save order number for tracking
-    localStorage.setItem('lastOrderNumber', newOrder.orderNumber);
-    
-    setActiveStep(2);
-    setSuccessDialogOpen(true);
-    clearCart();
+    try {
+      // Save order to backend
+      const result = await orderService.create(orderData);
+      
+      if (result.success && result.data) {
+        const savedOrder = result.data.order || result.data;
+        
+        // Also save to localStorage as backup
+        const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+        const updatedOrders = [...localOrders, savedOrder];
+        localStorage.setItem('orders', JSON.stringify(updatedOrders));
+        
+        // Send notification to admin
+        addNotification({
+          type: 'order',
+          title: 'New Order Received!',
+          message: `Order ${savedOrder.orderNumber} from ${savedOrder.customer.name} - ${formatCurrency(total)}`,
+          link: '/admin/orders',
+        });
+        
+        // Save order number for tracking
+        localStorage.setItem('lastOrderNumber', savedOrder.orderNumber);
+        
+        setActiveStep(2);
+        setSuccessDialogOpen(true);
+        clearCart();
+      } else {
+        throw new Error(result.message || 'Failed to create order');
+      }
+    } catch (error) {
+      console.error('Order creation error:', error);
+      // Fallback to localStorage if API fails
+      const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+      const newOrder = {
+        id: Math.max(...orders.map(o => o.id), 0) + 1,
+        orderNumber: `ORD-${new Date().getFullYear()}-${String(orders.length + 1).padStart(3, '0')}`,
+        ...orderData,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      const updatedOrders = [...orders, newOrder];
+      localStorage.setItem('orders', JSON.stringify(updatedOrders));
+      
+      setActiveStep(2);
+      setSuccessDialogOpen(true);
+      clearCart();
+    }
   };
 
   const handlePaymentError = (error) => {

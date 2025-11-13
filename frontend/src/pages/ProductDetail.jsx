@@ -29,8 +29,10 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useCart } from '../context/CartContext';
-import { loadProducts } from '../data/products';
+import { productService } from '../services/productService';
 import { formatCurrency } from '../utils/currency';
+import { useDynamicTitle } from '../hooks/useDynamicTitle';
+import Loader from '../components/Loader';
 
 const MotionBox = motion(Box);
 
@@ -49,12 +51,34 @@ const ProductDetail = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [loading, setLoading] = useState(true);
+
+  // Update browser tab title dynamically
+  useDynamicTitle(product?.name || 'Product Details');
 
   useEffect(() => {
-    const products = loadProducts();
-    const foundProduct = products.find((p) => p.id === parseInt(id));
-    setProduct(foundProduct);
+    const fetchProduct = async () => {
+      try {
+        setLoading(true);
+        const result = await productService.getById(id);
+        if (result.success && result.data) {
+          setProduct(result.data.product || result.data);
+        } else {
+          setProduct(null);
+        }
+      } catch (error) {
+        console.error('Error fetching product:', error);
+        setProduct(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProduct();
   }, [id]);
+
+  if (loading) {
+    return <Loader message="Loading product details..." fullScreen={true} />;
+  }
 
   if (!product) {
     return (
