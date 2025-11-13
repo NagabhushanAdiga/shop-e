@@ -78,6 +78,7 @@ const Orders = () => {
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [newStatus, setNewStatus] = useState('');
+  const [newPaymentStatus, setNewPaymentStatus] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   
   // Pagination & Search
@@ -119,19 +120,24 @@ const Orders = () => {
   const handleOpenStatusDialog = (order) => {
     setSelectedOrder(order);
     setNewStatus(order.status);
+    setNewPaymentStatus(order.paymentStatus || 'pending');
     setStatusDialogOpen(true);
   };
 
   const handleUpdateStatus = async () => {
     try {
-      console.log('🔄 Updating order status:', { 
+      console.log('🔄 Updating order:', { 
         orderId: selectedOrder._id || selectedOrder.id, 
-        newStatus 
+        newStatus,
+        newPaymentStatus
       });
       
       const result = await orderService.updateStatus(
         selectedOrder._id || selectedOrder.id, 
-        { status: newStatus }
+        { 
+          status: newStatus,
+          paymentStatus: newPaymentStatus
+        }
       );
       
       console.log('🔄 Update result:', result);
@@ -142,21 +148,21 @@ const Orders = () => {
         
         setSnackbar({
           open: true,
-          message: `Order status updated to ${newStatus}`,
+          message: `Order updated successfully`,
           severity: 'success',
         });
       } else {
         setSnackbar({
           open: true,
-          message: result.message || 'Failed to update order status',
+          message: result.message || 'Failed to update order',
           severity: 'error',
         });
       }
     } catch (error) {
-      console.error('💥 Update status error:', error);
+      console.error('💥 Update error:', error);
       setSnackbar({
         open: true,
-        message: 'Failed to update order status',
+        message: 'Failed to update order',
         severity: 'error',
       });
     }
@@ -682,7 +688,7 @@ const Orders = () => {
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle>Update Order Status</DialogTitle>
+        <DialogTitle>Update Order Status & Payment</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
             <Typography variant="body2" gutterBottom>
@@ -692,6 +698,8 @@ const Orders = () => {
               Customer: {selectedOrder?.customer.name}
             </Typography>
           </Box>
+          
+          {/* Order Status Dropdown */}
           <FormControl fullWidth sx={{ mt: 3 }}>
             <InputLabel>Order Status</InputLabel>
             <Select
@@ -709,8 +717,31 @@ const Orders = () => {
               ))}
             </Select>
           </FormControl>
+          
+          {/* Payment Status Dropdown */}
+          <FormControl fullWidth sx={{ mt: 2 }}>
+            <InputLabel>Payment Status</InputLabel>
+            <Select
+              value={newPaymentStatus}
+              onChange={(e) => setNewPaymentStatus(e.target.value)}
+              label="Payment Status"
+            >
+              {paymentStatuses.map((status) => (
+                <MenuItem key={status.value} value={status.value}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Chip 
+                      label={status.label} 
+                      color={status.color} 
+                      size="small"
+                    />
+                  </Box>
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          
           <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
-            Change the order status to update the customer
+            Update both order status and payment status as needed
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>
