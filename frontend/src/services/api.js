@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create axios instance with default config
 const API = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'https://shop-e.vercel.app/api',
+  baseURL: process.env.REACT_APP_API_URL || 'https://shop-e-server.vercel.app/api',
   headers: {
     'Content-Type': 'application/json',
   },
