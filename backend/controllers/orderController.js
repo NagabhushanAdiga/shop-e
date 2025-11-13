@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const User = require('../models/User');
+const { createNotification } = require('./notificationController');
 
 // @desc    Get all orders
 // @route   GET /api/orders
@@ -187,6 +188,29 @@ exports.createOrder = async (req, res) => {
       $inc: { totalOrders: 1, totalSpent: total },
     });
 
+    // Create notifications for all admin users
+    try {
+      const admins = await User.find({ role: 'admin' });
+      const notificationPromises = admins.map(admin =>
+        createNotification(admin._id, {
+          type: 'order',
+          title: 'New Order Received!',
+          message: `Order ${order.orderNumber} from ${order.customer.name} - ₹${total.toFixed(2)}`,
+          link: `/admin/orders`,
+          metadata: {
+            orderId: order._id,
+            orderNumber: order.orderNumber,
+            customerName: order.customer.name,
+            total: total,
+          },
+        })
+      );
+      await Promise.all(notificationPromises);
+    } catch (notifError) {
+      console.error('Error creating notifications:', notifError);
+      // Don't fail the order creation if notifications fail
+    }
+
     res.status(201).json({
       success: true,
       order,
@@ -214,6 +238,8 @@ exports.updateOrderStatus = async (req, res) => {
     }
 
     const { status, paymentStatus, trackingNumber } = req.body;
+    const oldStatus = order.status;
+    const oldPaymentStatus = order.paymentStatus;
 
     if (status) {
       order.status = status;
@@ -245,6 +271,65 @@ exports.updateOrderStatus = async (req, res) => {
     }
 
     await order.save();
+
+    // Create notification for user if status changed
+    try {
+      if (status && status !== oldStatus) {
+        const statusMessages = {
+          pending: 'Your order has been received and is awaiting confirmation.',
+          processing: 'Your order is being prepared for shipment.',
+          shipped: `Your order has been shipped! ${trackingNumber ? `Tracking: ${trackingNumber}` : ''}`,
+          delivered: 'Your order has been delivered. Thank you for shopping with us!',
+          cancelled: 'Your order has been cancelled.',
+        };
+
+        const statusTitles = {
+          pending: 'Order Received',
+          processing: 'Order Processing',
+          shipped: 'Order Shipped! 📦',
+          delivered: 'Order Delivered! ✅',
+          cancelled: 'Order Cancelled',
+        };
+
+        await createNotification(order.user, {
+          type: 'order',
+          title: statusTitles[status] || 'Order Status Updated',
+          message: `Order ${order.orderNumber}: ${statusMessages[status] || `Status updated to ${status}`}`,
+          link: `/profile`,
+          metadata: {
+            orderId: order._id,
+            orderNumber: order.orderNumber,
+            status: status,
+            total: order.total,
+          },
+        });
+      }
+
+      // Create notification if payment status changed
+      if (paymentStatus && paymentStatus !== oldPaymentStatus) {
+        const paymentMessages = {
+          pending: 'Payment is pending for your order.',
+          paid: 'Payment received! Thank you.',
+          failed: 'Payment failed. Please try again or contact support.',
+          refunded: 'Payment has been refunded to your account.',
+        };
+
+        await createNotification(order.user, {
+          type: 'order',
+          title: 'Payment Status Updated',
+          message: `Order ${order.orderNumber}: ${paymentMessages[paymentStatus] || `Payment status: ${paymentStatus}`}`,
+          link: `/profile`,
+          metadata: {
+            orderId: order._id,
+            orderNumber: order.orderNumber,
+            paymentStatus: paymentStatus,
+          },
+        });
+      }
+    } catch (notifError) {
+      console.error('Error creating user notification:', notifError);
+      // Don't fail the order update if notifications fail
+    }
 
     res.status(200).json({
       success: true,

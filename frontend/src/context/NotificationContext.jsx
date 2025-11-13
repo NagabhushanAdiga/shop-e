@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { notificationService } from '../services/notificationService';
+import { useAuth } from './AuthContext';
 
 const NotificationContext = createContext();
 
@@ -13,24 +15,62 @@ export const useNotifications = () => {
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const { user, isAuthenticated } = useAuth();
 
-  // Load notifications from localStorage
-  useEffect(() => {
-    const savedNotifications = localStorage.getItem('notifications');
-    if (savedNotifications) {
-      const parsed = JSON.parse(savedNotifications);
-      setNotifications(parsed);
-      setUnreadCount(parsed.filter(n => !n.read).length);
+  // Fetch notifications from API
+  const fetchNotifications = useCallback(async () => {
+    if (!isAuthenticated || !user) return;
+
+    try {
+      const result = await notificationService.getAll();
+      if (result.success && result.data) {
+        setNotifications(result.data.notifications || []);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
     }
-  }, []);
+  }, [isAuthenticated, user]);
 
-  // Save notifications to localStorage
+  // Fetch unread count
+  const fetchUnreadCount = useCallback(async () => {
+    if (!isAuthenticated || !user) return;
+
+    try {
+      const result = await notificationService.getUnreadCount();
+      if (result.success) {
+        setUnreadCount(result.count);
+      }
+    } catch (error) {
+      console.error('Error fetching unread count:', error);
+    }
+  }, [isAuthenticated, user]);
+
+  // Load notifications on mount and set up polling
   useEffect(() => {
-    localStorage.setItem('notifications', JSON.stringify(notifications));
-    setUnreadCount(notifications.filter(n => !n.read).length);
-  }, [notifications]);
+    if (!isAuthenticated || !user) return;
+
+    // Initial fetch
+    fetchNotifications();
+    fetchUnreadCount();
+
+    // Poll for new notifications
+    // Admin: every 10 seconds (faster updates for new orders)
+    // Regular users: every 30 seconds (for order status updates)
+    let pollInterval;
+    const pollTime = user?.role === 'admin' ? 10000 : 30000;
+    
+    pollInterval = setInterval(() => {
+      fetchUnreadCount();
+      fetchNotifications();
+    }, pollTime);
+
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [isAuthenticated, user, fetchNotifications, fetchUnreadCount]);
 
   const addNotification = (notification) => {
+    // For client-side notifications (e.g., success messages)
     const newNotification = {
       id: Date.now(),
       ...notification,
@@ -38,24 +78,50 @@ export const NotificationProvider = ({ children }) => {
       createdAt: new Date().toISOString(),
     };
     setNotifications((prev) => [newNotification, ...prev]);
+    setUnreadCount(prev => prev + 1);
   };
 
-  const markAsRead = (notificationId) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
-    );
+  const markAsRead = async (notificationId) => {
+    try {
+      const result = await notificationService.markAsRead(notificationId);
+      if (result.success) {
+        setNotifications((prev) =>
+          prev.map((n) => (n._id === notificationId || n.id === notificationId ? { ...n, read: true } : n))
+        );
+        fetchUnreadCount();
+      }
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  const markAllAsRead = async () => {
+    try {
+      const result = await notificationService.markAllAsRead();
+      if (result.success) {
+        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+        setUnreadCount(0);
+      }
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+    }
   };
 
-  const deleteNotification = (notificationId) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+  const deleteNotification = async (notificationId) => {
+    try {
+      const result = await notificationService.delete(notificationId);
+      if (result.success) {
+        setNotifications((prev) => prev.filter((n) => n._id !== notificationId && n.id !== notificationId));
+        fetchUnreadCount();
+      }
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    }
   };
 
   const clearAllNotifications = () => {
-    setNotifications([]);
+    // Clear only local notifications, not server ones
+    setNotifications((prev) => prev.filter(n => n._id)); // Keep only server notifications
   };
 
   const value = {
@@ -66,6 +132,8 @@ export const NotificationProvider = ({ children }) => {
     markAllAsRead,
     deleteNotification,
     clearAllNotifications,
+    fetchNotifications,
+    fetchUnreadCount,
   };
 
   return (

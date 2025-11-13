@@ -8,6 +8,7 @@ import { ThemeSettingsProvider, useThemeSettings } from './context/ThemeContext'
 import { StoreSettingsProvider } from './context/StoreSettingsContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import NotificationToast from './components/NotificationToast';
 import Home from './pages/Home';
 import Products from './pages/Products';
 import ProductDetail from './pages/ProductDetail';
@@ -110,6 +111,7 @@ const AppContent = () => {
         <NotificationProvider>
           <CartProvider>
             <Router>
+              <NotificationToast />
               <Routes>
                 {/* Public Routes with Header/Footer */}
                 <Route

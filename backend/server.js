@@ -18,6 +18,7 @@ const reportRoutes = require('./routes/reports');
 const paymentRoutes = require('./routes/payments');
 const setupRoutes = require('./routes/setup');
 const storeSettingsRoutes = require('./routes/storeSettings');
+const notificationRoutes = require('./routes/notifications');
 
 // Import error handler
 const errorHandler = require('./middleware/errorHandler');
@@ -143,6 +144,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

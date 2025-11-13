@@ -59,9 +59,11 @@ const UserProfile = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [orderDetailDialog, setOrderDetailDialog] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [userOrders, setUserOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
