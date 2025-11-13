@@ -92,8 +92,8 @@ const Login = () => {
         navigate('/');
       }
     } catch (err) {
-      setError('Invalid email or password');
-    } finally {
+      // Show specific error message or default
+      setError(err.message || 'Invalid email or password. Please try again.');
       setLoading(false);
     }
   };

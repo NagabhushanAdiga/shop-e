@@ -33,13 +33,22 @@ API.interceptors.response.use(
     // Handle specific error cases
     if (error.response) {
       // Server responded with error status
-      const { status, data } = error.response;
+      const { status, data, config } = error.response;
 
       if (status === 401) {
-        // Unauthorized - clear auth data and redirect to login
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
+        // Don't redirect if this is a login/register request (avoid refresh loop)
+        const isAuthRequest = config.url.includes('/auth/login') || config.url.includes('/auth/register');
+
+        if (!isAuthRequest) {
+          // Unauthorized - clear auth data and redirect to login
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('user');
+
+          // Only redirect if not already on login page
+          if (!window.location.pathname.includes('/login')) {
+            window.location.href = '/login';
+          }
+        }
       }
 
       if (status === 403) {
