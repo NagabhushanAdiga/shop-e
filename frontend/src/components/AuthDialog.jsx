@@ -213,18 +213,6 @@ const AuthDialog = ({ open, onClose }) => {
             <Tab label="Sign Up" />
           </Tabs>
 
-          {/* Demo Credentials Info (Login Tab Only) */}
-          {activeTab === 0 && (
-            <Alert severity="info" sx={{ mb: 3 }}>
-              <Typography variant="body2" gutterBottom>
-                <strong>Admin:</strong> admin@shop-e.com / admin123
-              </Typography>
-              <Typography variant="body2">
-                <strong>User:</strong> Any email / any password
-              </Typography>
-            </Alert>
-          )}
-
           {error && (
             <Alert severity="error" sx={{ mb: 3 }}>
               {error}
