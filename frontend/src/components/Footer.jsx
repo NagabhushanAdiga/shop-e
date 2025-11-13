@@ -21,6 +21,7 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useThemeSettings } from '../context/ThemeContext';
+import { useStoreSettings } from '../context/StoreSettingsContext';
 
 const MotionIconButton = motion(IconButton);
 
@@ -28,6 +29,7 @@ const Footer = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { themeSettings } = useThemeSettings();
+  const { storeSettings } = useStoreSettings();
 
   return (
     <Box
@@ -44,11 +46,10 @@ const Footer = () => {
           {/* About Section */}
           <Grid item xs={12} sm={6} md={3}>
             <Typography variant="h6" gutterBottom fontWeight={600}>
-              About Shop-E
+              About {storeSettings.storeName || 'Shop-E'}
             </Typography>
             <Typography variant="body2" sx={{ opacity: 0.9, lineHeight: 1.7 }}>
-              Your trusted online shopping destination for quality products at
-              great prices. Shop with confidence and convenience.
+              {storeSettings.aboutUs || 'Your trusted online shopping destination for quality products at great prices. Shop with confidence and convenience.'}
             </Typography>
           </Grid>
 
@@ -115,47 +116,93 @@ const Footer = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Email fontSize="small" />
                 <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                  support@shop-e.com
+                  {storeSettings.contactEmail || 'support@shop-e.com'}
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Phone fontSize="small" />
                 <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                  +1 (555) 123-4567
+                  {storeSettings.contactPhone || '+1 (555) 123-4567'}
                 </Typography>
               </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <LocationOn fontSize="small" />
+              <Box sx={{ display: 'flex', alignItems: 'start', gap: 1 }}>
+                <LocationOn fontSize="small" sx={{ mt: 0.3 }} />
                 <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                  123 Shopping St, NY 10001
+                  {storeSettings.address || '123 Shopping St, NY 10001'}
                 </Typography>
               </Box>
             </Box>
 
             {/* Social Media */}
             <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-              {[
-                { icon: <Facebook />, label: 'Facebook' },
-                { icon: <Twitter />, label: 'Twitter' },
-                { icon: <Instagram />, label: 'Instagram' },
-                { icon: <LinkedIn />, label: 'LinkedIn' },
-              ].map((social) => (
+              {storeSettings.socialMedia?.facebook && (
                 <MotionIconButton
-                  key={social.label}
+                  component="a"
+                  href={storeSettings.socialMedia.facebook}
+                  target="_blank"
                   whileHover={{ scale: 1.1, y: -2 }}
                   whileTap={{ scale: 0.9 }}
                   size="small"
                   sx={{
                     color: 'white',
                     bgcolor: 'rgba(255,255,255,0.1)',
-                    '&:hover': {
-                      bgcolor: 'rgba(255,255,255,0.2)',
-                    },
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
                   }}
                 >
-                  {social.icon}
+                  <Facebook />
                 </MotionIconButton>
-              ))}
+              )}
+              {storeSettings.socialMedia?.twitter && (
+                <MotionIconButton
+                  component="a"
+                  href={storeSettings.socialMedia.twitter}
+                  target="_blank"
+                  whileHover={{ scale: 1.1, y: -2 }}
+                  whileTap={{ scale: 0.9 }}
+                  size="small"
+                  sx={{
+                    color: 'white',
+                    bgcolor: 'rgba(255,255,255,0.1)',
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
+                  }}
+                >
+                  <Twitter />
+                </MotionIconButton>
+              )}
+              {storeSettings.socialMedia?.instagram && (
+                <MotionIconButton
+                  component="a"
+                  href={storeSettings.socialMedia.instagram}
+                  target="_blank"
+                  whileHover={{ scale: 1.1, y: -2 }}
+                  whileTap={{ scale: 0.9 }}
+                  size="small"
+                  sx={{
+                    color: 'white',
+                    bgcolor: 'rgba(255,255,255,0.1)',
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
+                  }}
+                >
+                  <Instagram />
+                </MotionIconButton>
+              )}
+              {storeSettings.socialMedia?.linkedin && (
+                <MotionIconButton
+                  component="a"
+                  href={storeSettings.socialMedia.linkedin}
+                  target="_blank"
+                  whileHover={{ scale: 1.1, y: -2 }}
+                  whileTap={{ scale: 0.9 }}
+                  size="small"
+                  sx={{
+                    color: 'white',
+                    bgcolor: 'rgba(255,255,255,0.1)',
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
+                  }}
+                >
+                  <LinkedIn />
+                </MotionIconButton>
+              )}
             </Box>
           </Grid>
         </Grid>
@@ -172,7 +219,7 @@ const Footer = () => {
           }}
         >
           <Typography variant="body2" sx={{ opacity: 0.9 }}>
-            © {new Date().getFullYear()} Shop-E. All rights reserved.
+            © {new Date().getFullYear()} {storeSettings.storeName || 'Shop-E'}. {storeSettings.footerText || 'All rights reserved.'}
           </Typography>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Link href="#" color="inherit" underline="hover" sx={{ opacity: 0.9 }}>

@@ -31,6 +31,7 @@ import { motion } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useThemeSettings } from '../context/ThemeContext';
+import { useStoreSettings } from '../context/StoreSettingsContext';
 import CartDialog from './CartDialog';
 import AuthDialog from './AuthDialog';
 
@@ -43,6 +44,7 @@ const Header = () => {
   const { getCartCount, setCartOpen } = useCart();
   const { user, logout, isAdmin } = useAuth();
   const { themeSettings } = useThemeSettings();
+  const { storeSettings } = useStoreSettings();
   
   const [anchorEl, setAnchorEl] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -89,12 +91,25 @@ const Header = () => {
                 color: 'white',
               }}
             >
-              <motion.div
-                whileHover={{ scale: 1.05, rotate: 5 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Store sx={{ fontSize: 32, mr: 1 }} />
-              </motion.div>
+              {storeSettings.logo ? (
+                <Box
+                  component="img"
+                  src={storeSettings.logo}
+                  alt={storeSettings.storeName}
+                  sx={{
+                    height: 40,
+                    mr: 1,
+                    objectFit: 'contain',
+                  }}
+                />
+              ) : (
+                <motion.div
+                  whileHover={{ scale: 1.05, rotate: 5 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Store sx={{ fontSize: 32, mr: 1 }} />
+                </motion.div>
+              )}
               <Typography
                 variant="h5"
                 sx={{
@@ -102,7 +117,7 @@ const Header = () => {
                   display: { xs: 'none', sm: 'block' },
                 }}
               >
-                Shop-E
+                {storeSettings.storeName || 'Shop-E'}
               </Typography>
             </Box>
 

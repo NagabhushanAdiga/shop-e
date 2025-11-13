@@ -47,6 +47,7 @@ import {
 import { motion } from 'framer-motion';
 import { orderService } from '../../services/orderService';
 import { formatCurrency } from '../../utils/currency';
+import Loader from '../../components/Loader';
 
 // Order status constants
 const orderStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];

@@ -34,6 +34,7 @@ import { productService } from '../../services/productService';
 import { orderService } from '../../services/orderService';
 import { userService } from '../../services/userService';
 import { formatCurrency } from '../../utils/currency';
+import Loader from '../../components/Loader';
 
 const MotionCard = motion(Card);
 
@@ -152,11 +153,13 @@ const Dashboard = () => {
   // Sales by category
   const categoryStats = {};
   products.forEach(p => {
-    if (!categoryStats[p.category]) {
-      categoryStats[p.category] = { count: 0, value: 0 };
+    // Extract category name (handle both string and object formats)
+    const categoryName = typeof p.category === 'object' ? p.category.name : p.category;
+    if (!categoryStats[categoryName]) {
+      categoryStats[categoryName] = { count: 0, value: 0 };
     }
-    categoryStats[p.category].count += 1;
-    categoryStats[p.category].value += p.price * p.stock;
+    categoryStats[categoryName].count += 1;
+    categoryStats[categoryName].value += p.price * p.stock;
   });
   
   const formatDate = (dateString) => {
@@ -177,6 +180,10 @@ const Dashboard = () => {
       default: return 'default';
     }
   };
+
+  if (loading) {
+    return <Loader message="Loading dashboard data..." fullScreen={false} />;
+  }
 
   return (
     <Box>

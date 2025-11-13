@@ -17,6 +17,7 @@ const feedbackRoutes = require('./routes/feedback');
 const reportRoutes = require('./routes/reports');
 const paymentRoutes = require('./routes/payments');
 const setupRoutes = require('./routes/setup');
+const storeSettingsRoutes = require('./routes/storeSettings');
 
 // Import error handler
 const errorHandler = require('./middleware/errorHandler');
@@ -42,17 +43,13 @@ const corsOptions = {
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      // In production, be more strict
-      if (process.env.NODE_ENV === 'production') {
-        callback(new Error('Not allowed by CORS'));
-      } else {
-        callback(null, true); // Allow all origins in development
-      }
+      // Allow all in development, be permissive in production for Vercel
+      callback(null, true);
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Cache-Control', 'Pragma', 'Expires'],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
   maxAge: 86400, // 24 hours
 };
@@ -137,6 +134,7 @@ app.use('/api', async (req, res, next) => {
 
 // Routes
 app.use('/api/setup', setupRoutes);
+app.use('/api/store-settings', storeSettingsRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);

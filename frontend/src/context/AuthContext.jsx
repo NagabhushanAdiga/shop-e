@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authService } from '../services/authService';
 
 const AuthContext = createContext();
 
@@ -17,44 +18,63 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Check if user is logged in (from localStorage)
     const savedUser = localStorage.getItem('user');
-    if (savedUser) {
+    const authToken = localStorage.getItem('authToken');
+    if (savedUser && authToken) {
       setUser(JSON.parse(savedUser));
     }
     setLoading(false);
   }, []);
 
-  const login = (email, password) => {
-    // Simulate login - in real app, this would call an API
-    // Admin credentials: admin@shop-e.com / admin123
-    const isAdmin = email === 'admin@shop-e.com' && password === 'admin123';
-    
-    const userData = {
-      id: Date.now(),
-      email,
-      name: email.split('@')[0],
-      role: isAdmin ? 'admin' : 'user',
-    };
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-    return Promise.resolve(userData);
+  const login = async (email, password) => {
+    try {
+      // Call real backend API
+      const result = await authService.login(email, password);
+      
+      if (result.success && result.data) {
+        const { token, user: userData } = result.data;
+        
+        // Save token and user data
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+        
+        return userData;
+      } else {
+        throw new Error(result.message || 'Login failed');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   };
 
-  const signup = (name, email, password) => {
-    // Simulate signup - in real app, this would call an API
-    const userData = {
-      id: Date.now(),
-      email,
-      name,
-      role: 'user', // Default role is user
-    };
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-    return Promise.resolve(userData);
+  const signup = async (name, email, password) => {
+    try {
+      // Call real backend API
+      const result = await authService.register({ name, email, password });
+      
+      if (result.success && result.data) {
+        const { token, user: userData } = result.data;
+        
+        // Save token and user data
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+        
+        return userData;
+      } else {
+        throw new Error(result.message || 'Signup failed');
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      throw error;
+    }
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('authToken');
   };
 
   const value = {

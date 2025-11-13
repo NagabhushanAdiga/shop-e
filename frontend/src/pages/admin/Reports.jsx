@@ -22,6 +22,9 @@ import {
   useTheme,
   useMediaQuery,
   LinearProgress,
+  Menu,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import {
   TrendingUp,
@@ -35,12 +38,17 @@ import {
   Download,
   CalendarToday,
   BarChart,
+  PictureAsPdf,
+  TableChart,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { orderService } from '../../services/orderService';
 import { userService } from '../../services/userService';
 import { productService } from '../../services/productService';
 import { formatCurrency } from '../../utils/currency';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const MotionCard = motion(Card);
 
@@ -53,6 +61,7 @@ const Reports = () => {
   const [products, setProducts] = useState([]);
   const [reportType, setReportType] = useState('overview');
   const [dateRange, setDateRange] = useState('30days');
+  const [exportMenuAnchor, setExportMenuAnchor] = useState(null);
 
   useEffect(() => {
     const fetchReportData = async () => {
@@ -201,31 +210,166 @@ const Reports = () => {
     </MotionCard>
   );
 
-  const handleExportReport = () => {
-    // Mock export functionality
-    const reportData = {
-      reportType,
-      dateRange,
-      generatedAt: new Date().toISOString(),
-      summary: {
-        totalRevenue,
-        totalOrders,
-        totalUsers,
-        activeUsers,
-        averageOrderValue,
-      },
-      topProducts,
-      topCustomers,
-    };
+  const handleExportExcel = () => {
+    const fileName = `Shop-E-Report-${reportType}-${new Date().toISOString().split('T')[0]}.xlsx`;
     
-    const dataStr = JSON.stringify(reportData, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-    const exportFileDefaultName = `report-${reportType}-${new Date().toISOString().split('T')[0]}.json`;
+    // Create workbook
+    const wb = XLSX.utils.book_new();
     
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
+    // Summary Sheet
+    const summaryData = [
+      ['Shop-E Business Report'],
+      ['Generated:', new Date().toLocaleString()],
+      ['Report Type:', reportType],
+      ['Date Range:', dateRange],
+      [],
+      ['Key Metrics'],
+      ['Total Revenue', formatCurrency(totalRevenue)],
+      ['Total Orders', totalOrders],
+      ['Total Users', totalUsers],
+      ['Active Users', activeUsers],
+      ['Average Order Value', formatCurrency(averageOrderValue)],
+      ['Completed Orders', completedOrders],
+      ['Pending Orders', pendingOrders],
+      ['Cancelled Orders', cancelledOrders],
+    ];
+    const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary');
+    
+    // Top Products Sheet
+    if (topProducts.length > 0) {
+      const productsData = [
+        ['Rank', 'Product Name', 'Quantity Sold', 'Revenue'],
+        ...topProducts.map((product, index) => [
+          index + 1,
+          product.name,
+          product.quantity,
+          product.revenue,
+        ]),
+      ];
+      const productsSheet = XLSX.utils.aoa_to_sheet(productsData);
+      XLSX.utils.book_append_sheet(wb, productsSheet, 'Top Products');
+    }
+    
+    // Top Customers Sheet
+    if (topCustomers.length > 0) {
+      const customersData = [
+        ['Rank', 'Customer Name', 'Email', 'Total Orders', 'Total Spent'],
+        ...topCustomers.map((customer, index) => [
+          index + 1,
+          customer.name,
+          customer.email,
+          customer.orders,
+          customer.total,
+        ]),
+      ];
+      const customersSheet = XLSX.utils.aoa_to_sheet(customersData);
+      XLSX.utils.book_append_sheet(wb, customersSheet, 'Top Customers');
+    }
+    
+    // Orders Sheet
+    if (orders.length > 0) {
+      const ordersData = [
+        ['Order Number', 'Customer', 'Total', 'Status', 'Payment Method', 'Date'],
+        ...orders.map(order => [
+          order.orderNumber,
+          order.customer.name,
+          order.total,
+          order.status,
+          order.paymentMethod,
+          new Date(order.createdAt).toLocaleDateString(),
+        ]),
+      ];
+      const ordersSheet = XLSX.utils.aoa_to_sheet(ordersData);
+      XLSX.utils.book_append_sheet(wb, ordersSheet, 'All Orders');
+    }
+    
+    // Export
+    XLSX.writeFile(wb, fileName);
+    setExportMenuAnchor(null);
+  };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    const fileName = `Shop-E-Report-${reportType}-${new Date().toISOString().split('T')[0]}.pdf`;
+    
+    // Title
+    doc.setFontSize(20);
+    doc.setTextColor(102, 126, 234);
+    doc.text('Shop-E Business Report', 14, 20);
+    
+    // Report Info
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 30);
+    doc.text(`Report Type: ${reportType}`, 14, 36);
+    doc.text(`Date Range: ${dateRange}`, 14, 42);
+    
+    // Summary Section
+    doc.setFontSize(14);
+    doc.setTextColor(0);
+    doc.text('Key Metrics Summary', 14, 55);
+    
+    doc.autoTable({
+      startY: 60,
+      head: [['Metric', 'Value']],
+      body: [
+        ['Total Revenue', formatCurrency(totalRevenue)],
+        ['Total Orders', totalOrders.toString()],
+        ['Total Users', totalUsers.toString()],
+        ['Active Users', activeUsers.toString()],
+        ['Average Order Value', formatCurrency(averageOrderValue)],
+        ['Completed Orders', `${completedOrders} (${totalOrders > 0 ? ((completedOrders / totalOrders) * 100).toFixed(1) : 0}%)`],
+        ['Pending Orders', `${pendingOrders} (${totalOrders > 0 ? ((pendingOrders / totalOrders) * 100).toFixed(1) : 0}%)`],
+        ['Cancelled Orders', `${cancelledOrders} (${totalOrders > 0 ? ((cancelledOrders / totalOrders) * 100).toFixed(1) : 0}%)`],
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [102, 126, 234] },
+    });
+    
+    // Top Products
+    if (topProducts.length > 0) {
+      doc.setFontSize(14);
+      doc.text('Top Selling Products', 14, doc.lastAutoTable.finalY + 15);
+      
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 20,
+        head: [['Rank', 'Product Name', 'Quantity', 'Revenue']],
+        body: topProducts.map((product, index) => [
+          (index + 1).toString(),
+          product.name,
+          product.quantity.toString(),
+          formatCurrency(product.revenue),
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [102, 126, 234] },
+      });
+    }
+    
+    // Top Customers
+    if (topCustomers.length > 0) {
+      doc.addPage();
+      doc.setFontSize(14);
+      doc.text('Top Customers', 14, 20);
+      
+      doc.autoTable({
+        startY: 25,
+        head: [['Rank', 'Customer Name', 'Email', 'Orders', 'Total Spent']],
+        body: topCustomers.map((customer, index) => [
+          (index + 1).toString(),
+          customer.name,
+          customer.email,
+          customer.orders.toString(),
+          formatCurrency(customer.total),
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [102, 126, 234] },
+      });
+    }
+    
+    // Save PDF
+    doc.save(fileName);
+    setExportMenuAnchor(null);
   };
 
   return (
@@ -240,18 +384,38 @@ const Reports = () => {
             View detailed reports and insights about your business
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<Download />}
-          onClick={handleExportReport}
-          sx={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            boxShadow: 'none',
-            '&:hover': { boxShadow: 'none' },
-          }}
-        >
-          Export Report
-        </Button>
+        <Box>
+          <Button
+            variant="contained"
+            startIcon={<Download />}
+            onClick={(e) => setExportMenuAnchor(e.currentTarget)}
+            sx={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              boxShadow: 'none',
+              '&:hover': { boxShadow: 'none' },
+            }}
+          >
+            Export Report
+          </Button>
+          <Menu
+            anchorEl={exportMenuAnchor}
+            open={Boolean(exportMenuAnchor)}
+            onClose={() => setExportMenuAnchor(null)}
+          >
+            <MenuItem onClick={handleExportExcel}>
+              <ListItemIcon>
+                <TableChart fontSize="small" sx={{ color: 'success.main' }} />
+              </ListItemIcon>
+              <ListItemText>Export as Excel (.xlsx)</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={handleExportPDF}>
+              <ListItemIcon>
+                <PictureAsPdf fontSize="small" sx={{ color: 'error.main' }} />
+              </ListItemIcon>
+              <ListItemText>Export as PDF</ListItemText>
+            </MenuItem>
+          </Menu>
+        </Box>
       </Box>
 
       {/* Filters */}

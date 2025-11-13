@@ -5,6 +5,9 @@ const API = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'https://shop-e-server.vercel.app/api',
   headers: {
     'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
   },
   timeout: 10000, // 10 seconds
 });

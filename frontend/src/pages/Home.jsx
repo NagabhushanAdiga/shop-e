@@ -43,8 +43,10 @@ import {
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { productService } from '../services/productService';
 import { formatCurrency } from '../utils/currency';
+import Loader from '../components/Loader';
 
 const MotionBox = motion(Box);
 const MotionCard = motion(Card);
@@ -56,9 +58,17 @@ const Home = () => {
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { user, isAdmin } = useAuth();
   const [products, setProducts] = useState([]);
   const [activeSlide, setActiveSlide] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  // Redirect admin users to admin dashboard
+  useEffect(() => {
+    if (user && isAdmin) {
+      navigate('/admin/dashboard');
+    }
+  }, [user, isAdmin, navigate]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -85,11 +95,15 @@ const Home = () => {
     addToCart(product);
   };
 
+  const getCategoryName = (category) => {
+    return typeof category === 'object' ? category.name : category;
+  };
+
   const categories = [
-    { name: 'Electronics', icon: <Laptop />, color: '#667eea', count: products.filter(p => p.category === 'Electronics').length, image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=400&q=80' },
-    { name: 'Fashion', icon: <Checkroom />, color: '#f093fb', count: products.filter(p => p.category === 'Fashion').length, image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=400&q=80' },
-    { name: 'Sports', icon: <FitnessCenter />, color: '#4facfe', count: products.filter(p => p.category === 'Sports').length, image: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&q=80' },
-    { name: 'Home', icon: <HomeIcon />, color: '#43e97b', count: products.filter(p => p.category === 'Home').length, image: 'https://images.unsplash.com/photo-1484101403633-562f891dc89a?w=400&q=80' },
+    { name: 'Electronics', icon: <Laptop />, color: '#667eea', count: products.filter(p => getCategoryName(p.category) === 'Electronics').length, image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=400&q=80' },
+    { name: 'Fashion', icon: <Checkroom />, color: '#f093fb', count: products.filter(p => getCategoryName(p.category) === 'Fashion').length, image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=400&q=80' },
+    { name: 'Sports', icon: <FitnessCenter />, color: '#4facfe', count: products.filter(p => getCategoryName(p.category) === 'Sports').length, image: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&q=80' },
+    { name: 'Home', icon: <HomeIcon />, color: '#43e97b', count: products.filter(p => getCategoryName(p.category) === 'Home').length, image: 'https://images.unsplash.com/photo-1484101403633-562f891dc89a?w=400&q=80' },
   ];
 
   const heroSlides = [
@@ -122,6 +136,10 @@ const Home = () => {
     }, 5000);
     return () => clearInterval(timer);
   }, []);
+
+  if (loading) {
+    return <Loader message="Loading products..." fullScreen={true} />;
+  }
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
@@ -389,7 +407,7 @@ const Home = () => {
         <Container maxWidth={false} sx={{ py: 4, px: { xs: 2, sm: 3, md: 4 }, maxWidth: '100%' }}>
           <Grid container spacing={3}>
             {[
-              { icon: <LocalShipping />, title: 'Free Shipping', desc: 'On orders over $50', color: '#667eea' },
+              { icon: <LocalShipping />, title: 'Free Shipping', desc: 'On orders over ₹4000', color: '#667eea' },
               { icon: <Security />, title: 'Secure Payment', desc: '100% protected', color: '#43e97b' },
               { icon: <Support />, title: '24/7 Support', desc: 'Dedicated support', color: '#f093fb' },
               { icon: <CardGiftcard />, title: 'Gift Cards', desc: 'Buy now, use later', color: '#ffa502' },

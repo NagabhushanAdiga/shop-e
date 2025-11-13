@@ -24,8 +24,10 @@ import { Search, ShoppingCart, FilterList } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { productService } from '../services/productService';
 import { formatCurrency } from '../utils/currency';
+import Loader from '../components/Loader';
 
 const MotionCard = motion(Card);
 
@@ -34,12 +36,20 @@ const Products = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  
+  const { user, isAdmin } = useAuth();
+
   const [products, setProducts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('name');
   const [loading, setLoading] = useState(true);
+
+  // Redirect admin users to admin dashboard
+  useEffect(() => {
+    if (user && isAdmin) {
+      navigate('/admin/dashboard');
+    }
+  }, [user, isAdmin, navigate]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -89,6 +99,10 @@ const Products = () => {
   const handleAddToCart = (product) => {
     addToCart(product);
   };
+
+  if (loading) {
+    return <Loader message="Loading products..." fullScreen={true} />;
+  }
 
   return (
     <Box sx={{ minHeight: '80vh', bgcolor: 'background.default', py: 3, px: { xs: 2, sm: 3, md: 4 } }}>

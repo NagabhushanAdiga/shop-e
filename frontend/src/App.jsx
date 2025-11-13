@@ -5,6 +5,7 @@ import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { ThemeSettingsProvider, useThemeSettings } from './context/ThemeContext';
+import { StoreSettingsProvider } from './context/StoreSettingsContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -168,9 +169,11 @@ const AppContent = () => {
 
 function App() {
   return (
-    <ThemeSettingsProvider>
-      <AppContent />
-    </ThemeSettingsProvider>
+    <StoreSettingsProvider>
+      <ThemeSettingsProvider>
+        <AppContent />
+      </ThemeSettingsProvider>
+    </StoreSettingsProvider>
   );
 }
 

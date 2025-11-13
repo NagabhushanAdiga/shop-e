@@ -160,5 +160,74 @@ router.get('/status', async (req, res) => {
   }
 });
 
+// @desc    Delete all products
+// @route   DELETE /api/setup/delete-products
+// @access  Public (should be protected in production)
+router.delete('/delete-products', async (req, res) => {
+  try {
+    const result = await Product.deleteMany({});
+    
+    // Reset all category product counts to 0
+    await Category.updateMany({}, { productCount: 0 });
+
+    res.status(200).json({
+      success: true,
+      message: `Deleted ${result.deletedCount} products`,
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+// @desc    Delete all categories
+// @route   DELETE /api/setup/delete-categories
+// @access  Public (should be protected in production)
+router.delete('/delete-categories', async (req, res) => {
+  try {
+    const result = await Category.deleteMany({});
+
+    res.status(200).json({
+      success: true,
+      message: `Deleted ${result.deletedCount} categories`,
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+// @desc    Delete all data (products, categories, orders)
+// @route   DELETE /api/setup/delete-all-data
+// @access  Public (should be protected in production)
+router.delete('/delete-all-data', async (req, res) => {
+  try {
+    const [productsResult, categoriesResult] = await Promise.all([
+      Product.deleteMany({}),
+      Category.deleteMany({}),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      message: 'All data deleted successfully',
+      deleted: {
+        products: productsResult.deletedCount,
+        categories: categoriesResult.deletedCount,
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
 module.exports = router;
 
